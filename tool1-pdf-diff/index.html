@@ -164,6 +164,9 @@
         }
 
         .diff-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
             background: #f9f9f9;
             border-radius: 10px;
             padding: 30px;
@@ -172,30 +175,60 @@
             border: 1px solid #e0e0e0;
         }
 
-        .diff-line {
-            margin: 8px 0;
-            padding: 8px 12px;
-            border-radius: 5px;
+        .document-view {
+            background: white;
+            border-radius: 8px;
+            padding: 25px;
+            border: 1px solid #ddd;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             line-height: 1.6;
-            font-family: 'Courier New', monospace;
             font-size: 0.95rem;
         }
 
-        .diff-added {
+        .document-title {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #eee;
+            font-size: 1.1rem;
+        }
+
+        .document-content {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .highlight-added {
             background: #d4edda;
-            border-left: 4px solid #28a745;
             color: #155724;
+            padding: 2px 4px;
+            border-radius: 3px;
+            border: 1px solid #c3e6cb;
         }
 
-        .diff-removed {
+        .highlight-removed {
             background: #f8d7da;
-            border-left: 4px solid #dc3545;
             color: #721c24;
+            padding: 2px 4px;
+            border-radius: 3px;
+            border: 1px solid #f5c6cb;
+            text-decoration: line-through;
         }
 
-        .diff-unchanged {
-            background: #f8f9fa;
-            color: #6c757d;
+        .highlight-changed {
+            background: #fff3cd;
+            color: #856404;
+            padding: 2px 4px;
+            border-radius: 3px;
+            border: 1px solid #ffeaa7;
+        }
+
+        @media (max-width: 968px) {
+            .diff-container {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
         }
 
         .stats {
@@ -349,59 +382,59 @@
             return fullText;
         }
 
-        // Simple diff algorithm
-        function computeDiff(text1, text2) {
-            const lines1 = text1.split('\n').filter(line => line.trim());
-            const lines2 = text2.split('\n').filter(line => line.trim());
+        // Word-level diff algorithm for better inline highlighting
+        function computeWordDiff(text1, text2) {
+            const words1 = text1.split(/(\s+)/);
+            const words2 = text2.split(/(\s+)/);
             
             const diff = [];
             let i = 0, j = 0;
             
-            while (i < lines1.length || j < lines2.length) {
-                if (i >= lines1.length) {
-                    diff.push({ type: 'added', content: lines2[j] });
+            while (i < words1.length || j < words2.length) {
+                if (i >= words1.length) {
+                    diff.push({ type: 'added', content: words2[j] });
                     j++;
-                } else if (j >= lines2.length) {
-                    diff.push({ type: 'removed', content: lines1[i] });
+                } else if (j >= words2.length) {
+                    diff.push({ type: 'removed', content: words1[i] });
                     i++;
-                } else if (lines1[i] === lines2[j]) {
-                    diff.push({ type: 'unchanged', content: lines1[i] });
+                } else if (words1[i] === words2[j]) {
+                    diff.push({ type: 'unchanged', content: words1[i] });
                     i++;
                     j++;
                 } else {
-                    // Simple heuristic: check if next line matches
-                    let foundMatch = false;
-                    for (let k = 1; k <= 3 && j + k < lines2.length; k++) {
-                        if (lines1[i] === lines2[j + k]) {
+                    // Look ahead to find matching words
+                    let found = false;
+                    for (let k = 1; k <= 5 && j + k < words2.length; k++) {
+                        if (words1[i] === words2[j + k]) {
                             for (let l = 0; l < k; l++) {
-                                diff.push({ type: 'added', content: lines2[j + l] });
+                                diff.push({ type: 'added', content: words2[j + l] });
                             }
-                            diff.push({ type: 'unchanged', content: lines1[i] });
+                            diff.push({ type: 'unchanged', content: words1[i] });
                             i++;
                             j += k + 1;
-                            foundMatch = true;
+                            found = true;
                             break;
                         }
                     }
                     
-                    if (!foundMatch) {
-                        for (let k = 1; k <= 3 && i + k < lines1.length; k++) {
-                            if (lines1[i + k] === lines2[j]) {
+                    if (!found) {
+                        for (let k = 1; k <= 5 && i + k < words1.length; k++) {
+                            if (words1[i + k] === words2[j]) {
                                 for (let l = 0; l < k; l++) {
-                                    diff.push({ type: 'removed', content: lines1[i + l] });
+                                    diff.push({ type: 'removed', content: words1[i + l] });
                                 }
-                                diff.push({ type: 'unchanged', content: lines1[i + k] });
+                                diff.push({ type: 'unchanged', content: words1[i + k] });
                                 i += k + 1;
                                 j++;
-                                foundMatch = true;
+                                found = true;
                                 break;
                             }
                         }
                     }
                     
-                    if (!foundMatch) {
-                        diff.push({ type: 'removed', content: lines1[i] });
-                        diff.push({ type: 'added', content: lines2[j] });
+                    if (!found) {
+                        diff.push({ type: 'removed', content: words1[i] });
+                        diff.push({ type: 'added', content: words2[j] });
                         i++;
                         j++;
                     }
@@ -411,8 +444,42 @@
             return diff;
         }
 
+        // Create highlighted document views
+        function createDocumentViews(text1, text2, diff) {
+            const doc1Elements = [];
+            const doc2Elements = [];
+            
+            for (const item of diff) {
+                const content = item.content;
+                
+                switch (item.type) {
+                    case 'unchanged':
+                        doc1Elements.push(content);
+                        doc2Elements.push(content);
+                        break;
+                    case 'removed':
+                        doc1Elements.push(`<span class="highlight-removed">${escapeHtml(content)}</span>`);
+                        break;
+                    case 'added':
+                        doc2Elements.push(`<span class="highlight-added">${escapeHtml(content)}</span>`);
+                        break;
+                }
+            }
+            
+            return {
+                doc1: doc1Elements.join(''),
+                doc2: doc2Elements.join('')
+            };
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
         // Display results
-        function displayResults(diff) {
+        function displayResults(text1, text2, diff) {
             const statsDiv = document.getElementById('stats');
             const diffContainer = document.getElementById('diffContainer');
             
@@ -422,30 +489,40 @@
                 unchanged: diff.filter(d => d.type === 'unchanged').length
             };
             
+            const totalWords = stats.added + stats.removed + stats.unchanged;
+            const changePercentage = totalWords > 0 ? Math.round((stats.added + stats.removed) / totalWords * 100) : 0;
+            
             statsDiv.innerHTML = `
                 <div class="stat-box">
                     <div class="stat-number" style="color: #28a745;">${stats.added}</div>
-                    <div class="stat-label">Lines Added</div>
+                    <div class="stat-label">Words Added</div>
                 </div>
                 <div class="stat-box">
                     <div class="stat-number" style="color: #dc3545;">${stats.removed}</div>
-                    <div class="stat-label">Lines Removed</div>
+                    <div class="stat-label">Words Removed</div>
                 </div>
                 <div class="stat-box">
                     <div class="stat-number" style="color: #6c757d;">${stats.unchanged}</div>
-                    <div class="stat-label">Lines Unchanged</div>
+                    <div class="stat-label">Words Unchanged</div>
                 </div>
                 <div class="stat-box">
-                    <div class="stat-number">${Math.round((stats.added + stats.removed) / (stats.added + stats.removed + stats.unchanged) * 100)}%</div>
-                    <div class="stat-label">Difference</div>
+                    <div class="stat-number">${changePercentage}%</div>
+                    <div class="stat-label">Total Changes</div>
                 </div>
             `;
             
-            diffContainer.innerHTML = diff.map(item => {
-                const className = `diff-${item.type}`;
-                const prefix = item.type === 'added' ? '+ ' : item.type === 'removed' ? '- ' : '  ';
-                return `<div class="diff-line ${className}">${prefix}${item.content}</div>`;
-            }).join('');
+            const documentViews = createDocumentViews(text1, text2, diff);
+            
+            diffContainer.innerHTML = `
+                <div class="document-view">
+                    <div class="document-title">📄 Document 1: ${file1.name}</div>
+                    <div class="document-content">${documentViews.doc1}</div>
+                </div>
+                <div class="document-view">
+                    <div class="document-title">📄 Document 2: ${file2.name}</div>
+                    <div class="document-content">${documentViews.doc2}</div>
+                </div>
+            `;
             
             document.getElementById('results').style.display = 'block';
         }
@@ -462,8 +539,8 @@
                 const text1 = await extractTextFromPDF(file1);
                 const text2 = await extractTextFromPDF(file2);
                 
-                const diff = computeDiff(text1, text2);
-                displayResults(diff);
+                const diff = computeWordDiff(text1, text2);
+                displayResults(text1, text2, diff);
             } catch (error) {
                 alert('Error processing PDFs: ' + error.message);
                 console.error(error);
