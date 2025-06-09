@@ -382,62 +382,45 @@
             return fullText;
         }
 
-        // Word-level diff algorithm for better inline highlighting
+        // Advanced diff algorithm using dynamic programming (LCS-based)
         function computeWordDiff(text1, text2) {
-            const words1 = text1.split(/(\s+)/);
-            const words2 = text2.split(/(\s+)/);
+            const words1 = text1.split(/(\s+)/).filter(w => w.trim() || w.match(/\s/));
+            const words2 = text2.split(/(\s+)/).filter(w => w.trim() || w.match(/\s/));
             
+            // Build LCS table using dynamic programming
+            const m = words1.length;
+            const n = words2.length;
+            const dp = Array(m + 1).fill().map(() => Array(n + 1).fill(0));
+            
+            // Fill the LCS table
+            for (let i = 1; i <= m; i++) {
+                for (let j = 1; j <= n; j++) {
+                    if (words1[i - 1] === words2[j - 1]) {
+                        dp[i][j] = dp[i - 1][j - 1] + 1;
+                    } else {
+                        dp[i][j] = Math.max(dp[i - 1][j], dp[i][j - 1]);
+                    }
+                }
+            }
+            
+            // Backtrack to build the diff
             const diff = [];
-            let i = 0, j = 0;
+            let i = m, j = n;
             
-            while (i < words1.length || j < words2.length) {
-                if (i >= words1.length) {
-                    diff.push({ type: 'added', content: words2[j] });
-                    j++;
-                } else if (j >= words2.length) {
-                    diff.push({ type: 'removed', content: words1[i] });
-                    i++;
-                } else if (words1[i] === words2[j]) {
-                    diff.push({ type: 'unchanged', content: words1[i] });
-                    i++;
-                    j++;
-                } else {
-                    // Look ahead to find matching words
-                    let found = false;
-                    for (let k = 1; k <= 5 && j + k < words2.length; k++) {
-                        if (words1[i] === words2[j + k]) {
-                            for (let l = 0; l < k; l++) {
-                                diff.push({ type: 'added', content: words2[j + l] });
-                            }
-                            diff.push({ type: 'unchanged', content: words1[i] });
-                            i++;
-                            j += k + 1;
-                            found = true;
-                            break;
-                        }
-                    }
-                    
-                    if (!found) {
-                        for (let k = 1; k <= 5 && i + k < words1.length; k++) {
-                            if (words1[i + k] === words2[j]) {
-                                for (let l = 0; l < k; l++) {
-                                    diff.push({ type: 'removed', content: words1[i + l] });
-                                }
-                                diff.push({ type: 'unchanged', content: words1[i + k] });
-                                i += k + 1;
-                                j++;
-                                found = true;
-                                break;
-                            }
-                        }
-                    }
-                    
-                    if (!found) {
-                        diff.push({ type: 'removed', content: words1[i] });
-                        diff.push({ type: 'added', content: words2[j] });
-                        i++;
-                        j++;
-                    }
+            while (i > 0 || j > 0) {
+                if (i > 0 && j > 0 && words1[i - 1] === words2[j - 1]) {
+                    // Words match
+                    diff.unshift({ type: 'unchanged', content: words1[i - 1] });
+                    i--;
+                    j--;
+                } else if (j > 0 && (i === 0 || dp[i][j - 1] >= dp[i - 1][j])) {
+                    // Word added in text2
+                    diff.unshift({ type: 'added', content: words2[j - 1] });
+                    j--;
+                } else if (i > 0) {
+                    // Word removed from text1
+                    diff.unshift({ type: 'removed', content: words1[i - 1] });
+                    i--;
                 }
             }
             
