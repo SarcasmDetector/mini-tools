@@ -224,6 +224,30 @@
             border: 1px solid #ffeaa7;
         }
 
+        .highlight-similar {
+            background: #e7f3ff;
+            color: #004085;
+            padding: 2px 4px;
+            border-radius: 3px;
+            border: 1px solid #b3d7ff;
+            position: relative;
+        }
+
+        .highlight-similar::after {
+            content: "?";
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: #007bff;
+            color: white;
+            border-radius: 50%;
+            width: 12px;
+            height: 12px;
+            font-size: 8px;
+            line-height: 12px;
+            text-align: center;
+        }
+
         @media (max-width: 968px) {
             .diff-container {
                 grid-template-columns: 1fr;
@@ -366,7 +390,7 @@
             compareBtn.disabled = !(file1 && file2);
         }
 
-        // PDF text extraction
+        // PDF text extraction with improved methods
         async function extractTextFromPDF(file) {
             const arrayBuffer = await file.arrayBuffer();
             const pdf = await pdfjsLib.getDocument(arrayBuffer).promise;
@@ -374,29 +398,110 @@
             
             for (let i = 1; i <= pdf.numPages; i++) {
                 const page = await pdf.getPage(i);
-                const textContent = await page.getTextContent();
-                const pageText = textContent.items.map(item => item.str).join(' ');
-                fullText += pageText + '\n';
+                
+                // Try multiple extraction methods for better accuracy
+                const textContent = await page.getTextContent({
+                    normalizeWhitespace: true,
+                    disableCombineTextItems: false
+                });
+                
+                // Extract text with better handling of positioning and spacing
+                let pageText = '';
+                let lastY = null;
+                
+                for (const item of textContent.items) {
+                    // Add line breaks when Y position changes significantly
+                    if (lastY !== null && Math.abs(item.transform[5] - lastY) > 5) {
+                        pageText += '\n';
+                    }
+                    
+                    pageText += item.str;
+                    
+                    // Add space if the next item is far horizontally
+                    if (item.hasEOL || (item.width && item.width > 0)) {
+                        pageText += ' ';
+                    }
+                    
+                    lastY = item.transform[5];
+                }
+                
+                fullText += normalizeText(pageText) + '\n';
             }
             
             return fullText;
         }
 
-        // Advanced diff algorithm using dynamic programming (LCS-based)
+        // Text normalization function
+        function normalizeText(text) {
+            return text
+                // Unicode normalization
+                .normalize('NFC')
+                // Remove zero-width characters
+                .replace(/[\u200B-\u200D\uFEFF]/g, '')
+                // Normalize Japanese full-width vs half-width
+                .replace(/[！-～]/g, (char) => {
+                    return String.fromCharCode(char.charCodeAt(0) - 0xFEE0);
+                })
+                // Fix common OCR substitutions
+                .replace(/['']/g, "'")
+                .replace(/[""]/g, '"')
+                .replace(/—/g, '-')
+                .replace(/…/g, '...')
+                // Normalize whitespace
+                .replace(/\s+/g, ' ')
+                .trim();
+        }
+
+        // String similarity calculation (Levenshtein distance)
+        function calculateSimilarity(str1, str2) {
+            if (str1 === str2) return 1;
+            if (str1.length === 0 || str2.length === 0) return 0;
+            
+            const matrix = Array(str2.length + 1).fill().map(() => Array(str1.length + 1).fill(0));
+            
+            for (let i = 0; i <= str1.length; i++) matrix[0][i] = i;
+            for (let j = 0; j <= str2.length; j++) matrix[j][0] = j;
+            
+            for (let j = 1; j <= str2.length; j++) {
+                for (let i = 1; i <= str1.length; i++) {
+                    if (str1[i - 1] === str2[j - 1]) {
+                        matrix[j][i] = matrix[j - 1][i - 1];
+                    } else {
+                        matrix[j][i] = Math.min(
+                            matrix[j - 1][i - 1] + 1, // substitution
+                            matrix[j][i - 1] + 1,     // insertion
+                            matrix[j - 1][i] + 1      // deletion
+                        );
+                    }
+                }
+            }
+            
+            const maxLength = Math.max(str1.length, str2.length);
+            return (maxLength - matrix[str2.length][str1.length]) / maxLength;
+        }
+
+        // Advanced diff algorithm with fuzzy matching
         function computeWordDiff(text1, text2) {
             const words1 = text1.split(/(\s+)/).filter(w => w.trim() || w.match(/\s/));
             const words2 = text2.split(/(\s+)/).filter(w => w.trim() || w.match(/\s/));
             
-            // Build LCS table using dynamic programming
+            // Build LCS table using dynamic programming with fuzzy matching
             const m = words1.length;
             const n = words2.length;
             const dp = Array(m + 1).fill().map(() => Array(n + 1).fill(0));
+            const similarityThreshold = 0.8; // 80% similarity threshold
             
             // Fill the LCS table
             for (let i = 1; i <= m; i++) {
                 for (let j = 1; j <= n; j++) {
-                    if (words1[i - 1] === words2[j - 1]) {
+                    const word1 = words1[i - 1].trim();
+                    const word2 = words2[j - 1].trim();
+                    
+                    if (word1 === word2 || (!word1 && !word2)) {
                         dp[i][j] = dp[i - 1][j - 1] + 1;
+                    } else if (word1 && word2 && calculateSimilarity(word1, word2) >= similarityThreshold) {
+                        // Treat very similar words as matches (for fuzzy matching)
+                        dp[i][j] = dp[i - 1][j - 1] + 0.9; // Slightly less than perfect match
                     } else {
                         dp[i][j] = Math.max(dp[i - 1][j], dp[i][j - 1]);
                     }
@@ -408,17 +513,39 @@
             let i = m, j = n;
             
             while (i > 0 || j > 0) {
-                if (i > 0 && j > 0 && words1[i - 1] === words2[j - 1]) {
-                    // Words match
-                    diff.unshift({ type: 'unchanged', content: words1[i - 1] });
-                    i--;
-                    j--;
-                } else if (j > 0 && (i === 0 || dp[i][j - 1] >= dp[i - 1][j])) {
-                    // Word added in text2
+                if (i > 0 && j > 0) {
+                    const word1 = words1[i - 1].trim();
+                    const word2 = words2[j - 1].trim();
+                    const similarity = word1 && word2 ? calculateSimilarity(word1, word2) : 0;
+                    
+                    if (word1 === word2 || (!word1 && !word2)) {
+                        // Perfect match
+                        diff.unshift({ type: 'unchanged', content: words1[i - 1] });
+                        i--;
+                        j--;
+                    } else if (similarity >= similarityThreshold) {
+                        // Similar words - likely OCR error
+                        diff.unshift({ 
+                            type: 'similar', 
+                            content1: words1[i - 1], 
+                            content2: words2[j - 1],
+                            similarity: similarity
+                        });
+                        i--;
+                        j--;
+                    } else if (j > 0 && (i === 0 || dp[i][j - 1] >= dp[i - 1][j])) {
+                        // Word added in text2
+                        diff.unshift({ type: 'added', content: words2[j - 1] });
+                        j--;
+                    } else {
+                        // Word removed from text1
+                        diff.unshift({ type: 'removed', content: words1[i - 1] });
+                        i--;
+                    }
+                } else if (j > 0) {
                     diff.unshift({ type: 'added', content: words2[j - 1] });
                     j--;
-                } else if (i > 0) {
-                    // Word removed from text1
+                } else {
                     diff.unshift({ type: 'removed', content: words1[i - 1] });
                     i--;
                 }
@@ -427,24 +554,32 @@
             return diff;
         }
 
-        // Create highlighted document views
+        // Create highlighted document views with fuzzy matching support
         function createDocumentViews(text1, text2, diff) {
             const doc1Elements = [];
             const doc2Elements = [];
             
             for (const item of diff) {
-                const content = item.content;
-                
                 switch (item.type) {
                     case 'unchanged':
-                        doc1Elements.push(content);
-                        doc2Elements.push(content);
+                        doc1Elements.push(item.content);
+                        doc2Elements.push(item.content);
                         break;
                     case 'removed':
-                        doc1Elements.push(`<span class="highlight-removed">${escapeHtml(content)}</span>`);
+                        doc1Elements.push(`<span class="highlight-removed">${escapeHtml(item.content)}</span>`);
                         break;
                     case 'added':
-                        doc2Elements.push(`<span class="highlight-added">${escapeHtml(content)}</span>`);
+                        doc2Elements.push(`<span class="highlight-added">${escapeHtml(item.content)}</span>`);
+                        break;
+                    case 'similar':
+                        // Show both versions with special highlighting for likely OCR errors
+                        const similarity = Math.round(item.similarity * 100);
+                        doc1Elements.push(
+                            `<span class="highlight-similar" title="Possible OCR error: ${similarity}% similar to '${escapeHtml(item.content2)}'">${escapeHtml(item.content1)}</span>`
+                        );
+                        doc2Elements.push(
+                            `<span class="highlight-similar" title="Possible OCR error: ${similarity}% similar to '${escapeHtml(item.content1)}'">${escapeHtml(item.content2)}</span>`
+                        );
                         break;
                 }
             }
@@ -461,7 +596,7 @@
             return div.innerHTML;
         }
 
-        // Display results
+        // Display results with improved statistics
         function displayResults(text1, text2, diff) {
             const statsDiv = document.getElementById('stats');
             const diffContainer = document.getElementById('diffContainer');
@@ -469,10 +604,11 @@
             const stats = {
                 added: diff.filter(d => d.type === 'added').length,
                 removed: diff.filter(d => d.type === 'removed').length,
-                unchanged: diff.filter(d => d.type === 'unchanged').length
+                unchanged: diff.filter(d => d.type === 'unchanged').length,
+                similar: diff.filter(d => d.type === 'similar').length
             };
             
-            const totalWords = stats.added + stats.removed + stats.unchanged;
+            const totalWords = stats.added + stats.removed + stats.unchanged + stats.similar;
             const changePercentage = totalWords > 0 ? Math.round((stats.added + stats.removed) / totalWords * 100) : 0;
             
             statsDiv.innerHTML = `
@@ -485,12 +621,12 @@
                     <div class="stat-label">Words Removed</div>
                 </div>
                 <div class="stat-box">
-                    <div class="stat-number" style="color: #6c757d;">${stats.unchanged}</div>
-                    <div class="stat-label">Words Unchanged</div>
+                    <div class="stat-number" style="color: #007bff;">${stats.similar}</div>
+                    <div class="stat-label">Possible OCR Errors</div>
                 </div>
                 <div class="stat-box">
                     <div class="stat-number">${changePercentage}%</div>
-                    <div class="stat-label">Total Changes</div>
+                    <div class="stat-label">True Changes</div>
                 </div>
             `;
             
@@ -506,6 +642,17 @@
                     <div class="document-content">${documentViews.doc2}</div>
                 </div>
             `;
+            
+            // Add legend for highlighting
+            const legend = document.createElement('div');
+            legend.style.cssText = 'margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px; font-size: 0.9rem;';
+            legend.innerHTML = `
+                <strong>Legend:</strong>
+                <span style="background: #d4edda; padding: 2px 6px; margin: 0 8px; border-radius: 3px;">Added text</span>
+                <span style="background: #f8d7da; padding: 2px 6px; margin: 0 8px; border-radius: 3px; text-decoration: line-through;">Removed text</span>
+                <span style="background: #e7f3ff; padding: 2px 6px; margin: 0 8px; border-radius: 3px;">Possible OCR error (hover for details)</span>
+            `;
+            diffContainer.appendChild(legend);
             
             document.getElementById('results').style.display = 'block';
         }
