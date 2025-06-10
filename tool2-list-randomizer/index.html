@@ -867,7 +867,119 @@
             const shuffledAbsent = shuffleArray(absentStudents);
             
             switch (classData.absentPlacement) {
-                case 'last':
+                case 'separate':
+                default:
+                    return [...presentArrangement, ...shuffledAbsent];
+            }
+        }
+
+        // Display results
+        function displayResults(arrangement) {
+            const grid = document.getElementById('resultsGrid');
+            grid.innerHTML = '';
+            
+            if (classData.groupSize === 1) {
+                // Simple list
+                const group = document.createElement('div');
+                group.className = 'result-group';
+                group.innerHTML = `
+                    <div class="group-title">Randomized List</div>
+                    <ul class="group-items">
+                        ${arrangement.map((item, index) => {
+                            const isAbsent = classData.absentStudents.includes(item);
+                            return `<li class="${isAbsent ? 'absent' : ''}">${index + 1}. ${item}${isAbsent ? ' (absent)' : ''}</li>`;
+                        }).join('')}
+                    </ul>
+                `;
+                grid.appendChild(group);
+            } else {
+                // Calculate optimal group sizes
+                const groupSizes = calculateOptimalGroups(arrangement.length, classData.groupSize);
+                
+                let currentIndex = 0;
+                groupSizes.forEach((size, groupIndex) => {
+                    const groupItems = arrangement.slice(currentIndex, currentIndex + size);
+                    currentIndex += size;
+                    
+                    const group = document.createElement('div');
+                    group.className = 'result-group';
+                    
+                    const absentCount = groupItems.filter(item => classData.absentStudents.includes(item)).length;
+                    const presentCount = size - absentCount;
+                    
+                    group.innerHTML = `
+                        <div class="group-title">Group ${groupIndex + 1} (${presentCount} present${absentCount > 0 ? `, ${absentCount} absent` : ''})</div>
+                        <ul class="group-items">
+                            ${groupItems.map(item => {
+                                const isAbsent = classData.absentStudents.includes(item);
+                                return `<li class="${isAbsent ? 'absent' : ''}">${item}${isAbsent ? ' (absent)' : ''}</li>`;
+                            }).join('')}
+                        </ul>
+                    `;
+                    grid.appendChild(group);
+                });
+            }
+            
+            document.getElementById('resultsSection').style.display = 'block';
+        }
+
+        // Copy results to clipboard for Excel
+        function copyToExcel() {
+            const grid = document.getElementById('resultsGrid');
+            const groups = grid.querySelectorAll('.result-group');
+            
+            let excelText = '';
+            
+            groups.forEach((group, groupIndex) => {
+                const items = group.querySelectorAll('.group-items li');
+                items.forEach(item => {
+                    // Remove numbering and absent markers for clean Excel data
+                    let text = item.textContent;
+                    text = text.replace(/^\d+\.\s*/, ''); // Remove "1. " prefix
+                    text = text.replace(/\s*\(absent\)\s*$/, ''); // Remove "(absent)" suffix
+                    excelText += text + '\n';
+                });
+            });
+            
+            navigator.clipboard.writeText(excelText.trim()).then(() => {
+                showMessage('List copied to clipboard! You can paste it into Excel.', 'info');
+            }).catch(() => {
+                // Fallback for older browsers
+                const textArea = document.createElement('textarea');
+                textArea.value = excelText.trim();
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                showMessage('List copied to clipboard! You can paste it into Excel.', 'info');
+            });
+        }
+
+        // Show message
+        function showMessage(text, type = 'info') {
+            const container = document.getElementById('messagesContainer');
+            const message = document.createElement('div');
+            message.className = type === 'error' ? 'error-message' : 'info-message';
+            message.textContent = text;
+            
+            container.innerHTML = '';
+            container.appendChild(message);
+            
+            setTimeout(() => {
+                if (message.parentNode) {
+                    message.parentNode.removeChild(message);
+                }
+            }, 5000);
+        }
+
+        // Update group size when changed
+        document.getElementById('groupSize').addEventListener('change', function() {
+            const value = parseInt(this.value);
+            if (value < 1) this.value = 1;
+        });
+    </script>
+</body>
+</html>last':
                     return [...presentArrangement, ...shuffledAbsent];
                 case 'spread':
                     // Interleave absent students throughout
