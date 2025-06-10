@@ -979,15 +979,4 @@
         });
     </script>
 </body>
-</html>last':
-                    return [...presentArrangement, ...shuffledAbsent];
-                case 'spread':
-                    // Interleave absent students throughout
-                    const result = [...presentArrangement];
-                    const step = Math.ceil(result.length / shuffledAbsent.length);
-                    shuffledAbsent.forEach((student, index) => {
-                        const insertPos = Math.min(result.length, (index + 1) * step);
-                        result.splice(insertPos, 0, student);
-                    });
-                    return result;
-                case '
+</html>
