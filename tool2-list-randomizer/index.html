@@ -646,17 +646,25 @@
         }
 
         // Check if arrangement satisfies constraints
-        function satisfiesConstraints(arrangement, groupSize) {
+        function satisfiesConstraints(arrangement, targetGroupSize) {
+            // Calculate optimal group sizes for constraint checking
+            const groupSizes = calculateOptimalGroups(arrangement.length, targetGroupSize);
+            
+            // Build group assignments
+            const groupAssignments = {};
+            let currentIndex = 0;
+            
+            groupSizes.forEach((size, groupIndex) => {
+                for (let i = 0; i < size; i++) {
+                    groupAssignments[arrangement[currentIndex + i]] = groupIndex;
+                }
+                currentIndex += size;
+            });
+            
             // Check exclusion pairs
             for (const [item1, item2] of constraints.exclusionPairs) {
-                const index1 = arrangement.indexOf(item1);
-                const index2 = arrangement.indexOf(item2);
-                
-                if (index1 !== -1 && index2 !== -1) {
-                    const group1 = Math.floor(index1 / groupSize);
-                    const group2 = Math.floor(index2 / groupSize);
-                    
-                    if (group1 === group2) {
+                if (groupAssignments[item1] !== undefined && groupAssignments[item2] !== undefined) {
+                    if (groupAssignments[item1] === groupAssignments[item2]) {
                         return false;
                     }
                 }
@@ -664,14 +672,8 @@
             
             // Check required pairs
             for (const [item1, item2] of constraints.requiredPairs) {
-                const index1 = arrangement.indexOf(item1);
-                const index2 = arrangement.indexOf(item2);
-                
-                if (index1 !== -1 && index2 !== -1) {
-                    const group1 = Math.floor(index1 / groupSize);
-                    const group2 = Math.floor(index2 / groupSize);
-                    
-                    if (group1 !== group2) {
+                if (groupAssignments[item1] !== undefined && groupAssignments[item2] !== undefined) {
+                    if (groupAssignments[item1] !== groupAssignments[item2]) {
                         return false;
                     }
                 }
@@ -772,6 +774,56 @@
             }, 100);
         }
 
+        // Calculate optimal group distribution
+        function calculateOptimalGroups(totalItems, targetGroupSize) {
+            if (targetGroupSize >= totalItems) {
+                return [totalItems];
+            }
+            
+            const numGroups = Math.ceil(totalItems / targetGroupSize);
+            const baseSize = Math.floor(totalItems / numGroups);
+            const remainder = totalItems % numGroups;
+            
+            const groupSizes = [];
+            for (let i = 0; i < numGroups; i++) {
+                // Distribute remainder items to first groups
+                groupSizes.push(baseSize + (i < remainder ? 1 : 0));
+            }
+            
+            return groupSizes;
+        }
+
+        // Copy results to clipboard for Excel
+        function copyToExcel() {
+            const grid = document.getElementById('resultsGrid');
+            const groups = grid.querySelectorAll('.result-group');
+            
+            let excelText = '';
+            
+            groups.forEach((group, groupIndex) => {
+                const items = group.querySelectorAll('.group-items li');
+                items.forEach(item => {
+                    // Remove numbering if present (for simple lists)
+                    let text = item.textContent;
+                    text = text.replace(/^\d+\.\s*/, ''); // Remove "1. " prefix
+                    excelText += text + '\n';
+                });
+            });
+            
+            navigator.clipboard.writeText(excelText.trim()).then(() => {
+                showMessage('List copied to clipboard! You can paste it into Excel.', 'info');
+            }).catch(() => {
+                // Fallback for older browsers
+                const textArea = document.createElement('textarea');
+                textArea.value = excelText.trim();
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                showMessage('List copied to clipboard! You can paste it into Excel.', 'info');
+            });
+        }
+
         // Display results
         function displayResults(arrangement, groupSize) {
             const grid = document.getElementById('resultsGrid');
@@ -789,24 +841,44 @@
                 `;
                 grid.appendChild(group);
             } else {
-                // Groups
-                const numGroups = Math.ceil(arrangement.length / groupSize);
+                // Calculate optimal group sizes
+                const groupSizes = calculateOptimalGroups(arrangement.length, groupSize);
                 
-                for (let i = 0; i < numGroups; i++) {
-                    const startIndex = i * groupSize;
-                    const groupItems = arrangement.slice(startIndex, startIndex + groupSize);
+                let currentIndex = 0;
+                groupSizes.forEach((size, groupIndex) => {
+                    const groupItems = arrangement.slice(currentIndex, currentIndex + size);
+                    currentIndex += size;
                     
                     const group = document.createElement('div');
                     group.className = 'result-group';
                     group.innerHTML = `
-                        <div class="group-title">Group ${i + 1}</div>
+                        <div class="group-title">Group ${groupIndex + 1} (${size} members)</div>
                         <ul class="group-items">
                             ${groupItems.map(item => `<li>${item}</li>`).join('')}
                         </ul>
                     `;
                     grid.appendChild(group);
-                }
+                });
             }
+            
+            // Add copy button
+            const copyButtonContainer = document.createElement('div');
+            copyButtonContainer.style.cssText = 'text-align: center; margin-top: 20px;';
+            copyButtonContainer.innerHTML = `
+                <button onclick="copyToExcel()" style="
+                    padding: 10px 20px;
+                    background: #28a745;
+                    color: white;
+                    border: none;
+                    border-radius: 8px;
+                    cursor: pointer;
+                    font-size: 1rem;
+                    transition: background 0.3s ease;
+                " onmouseover="this.style.background='#218838'" onmouseout="this.style.background='#28a745'">
+                    📋 Copy List for Excel
+                </button>
+            `;
+            grid.appendChild(copyButtonContainer);
             
             document.getElementById('resultsSection').style.display = 'block';
         }
