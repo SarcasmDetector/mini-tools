@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>List Randomizer with Constraints</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #ff6b6b, #feca57);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            padding: 40px;
+        }
+
+        .input-section {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 30px;
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            color: #333;
+            margin-bottom: 20px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .input-group {
+            margin-bottom: 25px;
+        }
+
+        .input-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #555;
+        }
+
+        .list-input {
+            width: 100%;
+            min-height: 200px;
+            padding: 15px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-family: inherit;
+            resize: vertical;
+            transition: border-color 0.3s ease;
+        }
+
+        .list-input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .constraints-section {
+            background: #fff;
+            border: 2px solid #e9ecef;
+            border-radius: 15px;
+            padding: 30px;
+        }
+
+        .constraint-type {
+            margin-bottom: 25px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border: 1px solid #dee2e6;
+        }
+
+        .constraint-header {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            margin-bottom: 15px;
+            cursor: pointer;
+        }
+
+        .constraint-title {
+            font-weight: 600;
+            color: #495057;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .toggle-btn {
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: background 0.3s ease;
+        }
+
+        .toggle-btn.active {
+            background: #667eea;
+        }
+
+        .constraint-inputs {
+            display: none;
+            grid-template-columns: 1fr auto;
+            gap: 10px;
+            align-items: center;
+            margin-top: 15px;
+        }
+
+        .constraint-inputs.active {
+            display: grid;
+        }
+
+        .constraint-input {
+            padding: 8px 12px;
+            border: 1px solid #ced4da;
+            border-radius: 5px;
+            font-size: 0.9rem;
+        }
+
+        .add-constraint-btn {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: background 0.3s ease;
+        }
+
+        .add-constraint-btn:hover {
+            background: #218838;
+        }
+
+        .constraint-list {
+            margin-top: 15px;
+        }
+
+        .constraint-item {
+            background: white;
+            padding: 10px 15px;
+            margin: 5px 0;
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.9rem;
+        }
+
+        .remove-constraint {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 4px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8rem;
+        }
+
+        .remove-constraint:hover {
+            background: #c82333;
+        }
+
+        .randomize-section {
+            grid-column: 1 / -1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 20px;
+            gap: 20px;
+        }
+
+        .randomize-options {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .randomize-btn {
+            padding: 15px 40px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .randomize-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .randomize-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .group-size-input {
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+            width: 80px;
+            text-align: center;
+        }
+
+        .results-section {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 30px;
+            margin-top: 30px;
+            display: none;
+        }
+
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .result-group {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .group-title {
+            font-weight: 600;
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.1rem;
+        }
+
+        .group-items {
+            list-style: none;
+        }
+
+        .group-items li {
+            padding: 8px 12px;
+            margin: 5px 0;
+            background: #f8f9fa;
+            border-radius: 6px;
+            border-left: 4px solid #667eea;
+        }
+
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            border: 1px solid #f5c6cb;
+        }
+
+        .info-message {
+            background: #d4edda;
+            color: #155724;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            border: 1px solid #c3e6cb;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+                gap: 20px;
+                padding: 20px;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .randomize-options {
+                justify-content: center;
+                text-align: center;
+            }
+            
+            .constraint-inputs {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-left: 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎲 List Randomizer with Constraints</h1>
+            <p>Randomize your lists with custom rules and constraints</p>
+        </div>
+
+        <div class="main-content">
+            <div class="input-section">
+                <div class="section-title">
+                    📝 Input List
+                </div>
+                <div class="input-group">
+                    <label class="input-label">Enter items (one per line):</label>
+                    <textarea class="list-input" id="itemsList" placeholder="Alice&#10;Bob&#10;Charlie&#10;Diana&#10;Eve&#10;Frank"></textarea>
+                </div>
+                <div class="input-group">
+                    <div id="itemCount" style="font-size: 0.9rem; color: #666;"></div>
+                </div>
+            </div>
+
+            <div class="constraints-section">
+                <div class="section-title">
+                    ⚙️ Constraints
+                </div>
+
+                <div class="constraint-type">
+                    <div class="constraint-header" onclick="toggleConstraint('position')">
+                        <div class="constraint-title">
+                            📍 Position Locks
+                            <span style="font-size: 0.8rem; color: #6c757d;">(Keep certain positions unchanged)</span>
+                        </div>
+                        <button class="toggle-btn" id="position-toggle">Enable</button>
+                    </div>
+                    <div class="constraint-inputs" id="position-inputs">
+                        <input type="text" class="constraint-input" id="position-range" placeholder="e.g., 1-3 or 1,2,5">
+                        <button class="add-constraint-btn" onclick="addPositionLock()">Add</button>
+                    </div>
+                    <div class="constraint-list" id="position-list"></div>
+                </div>
+
+                <div class="constraint-type">
+                    <div class="constraint-header" onclick="toggleConstraint('exclude')">
+                        <div class="constraint-title">
+                            🚫 Exclusion Pairs
+                            <span style="font-size: 0.8rem; color: #6c757d;">(Items that can't be in same group)</span>
+                        </div>
+                        <button class="toggle-btn" id="exclude-toggle">Enable</button>
+                    </div>
+                    <div class="constraint-inputs" id="exclude-inputs">
+                        <input type="text" class="constraint-input" id="exclude-pair" placeholder="e.g., Alice, Bob">
+                        <button class="add-constraint-btn" onclick="addExclusionPair()">Add</button>
+                    </div>
+                    <div class="constraint-list" id="exclude-list"></div>
+                </div>
+
+                <div class="constraint-type">
+                    <div class="constraint-header" onclick="toggleConstraint('require')">
+                        <div class="constraint-title">
+                            🤝 Required Pairs
+                            <span style="font-size: 0.8rem; color: #6c757d;">(Items that must be together)</span>
+                        </div>
+                        <button class="toggle-btn" id="require-toggle">Enable</button>
+                    </div>
+                    <div class="constraint-inputs" id="require-inputs">
+                        <input type="text" class="constraint-input" id="require-pair" placeholder="e.g., Charlie, Diana">
+                        <button class="add-constraint-btn" onclick="addRequiredPair()">Add</button>
+                    </div>
+                    <div class="constraint-list" id="require-list"></div>
+                </div>
+            </div>
+
+            <div class="randomize-section">
+                <div class="randomize-options">
+                    <label>
+                        Group Size:
+                        <input type="number" class="group-size-input" id="groupSize" value="1" min="1">
+                    </label>
+                    <button class="randomize-btn" id="randomizeBtn" onclick="randomizeList()">
+                        🎲 Randomize List
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="results-section" id="resultsSection">
+            <div class="section-title">
+                🎯 Results
+            </div>
+            <div id="messagesContainer"></div>
+            <div class="results-grid" id="resultsGrid"></div>
+        </div>
+    </div>
+
+    <script>
+        // Global state
+        let constraints = {
+            positionLocks: [],
+            exclusionPairs: [],
+            requiredPairs: []
+        };
+
+        // Update item count
+        function updateItemCount() {
+            const items = getItemsFromInput();
+            document.getElementById('itemCount').textContent = `${items.length} items`;
+        }
+
+        // Get items from textarea
+        function getItemsFromInput() {
+            const text = document.getElementById('itemsList').value;
+            return text.split('\n')
+                .map(item => item.trim())
+                .filter(item => item.length > 0);
+        }
+
+        // Toggle constraint sections
+        function toggleConstraint(type) {
+            const toggle = document.getElementById(`${type}-toggle`);
+            const inputs = document.getElementById(`${type}-inputs`);
+            
+            if (inputs.classList.contains('active')) {
+                inputs.classList.remove('active');
+                toggle.textContent = 'Enable';
+                toggle.classList.remove('active');
+            } else {
+                inputs.classList.add('active');
+                toggle.textContent = 'Disable';
+                toggle.classList.add('active');
+            }
+        }
+
+        // Parse position range (e.g., "1-3" or "1,2,5")
+        function parsePositionRange(range) {
+            const positions = [];
+            const parts = range.split(',');
+            
+            for (const part of parts) {
+                const trimmed = part.trim();
+                if (trimmed.includes('-')) {
+                    const [start, end] = trimmed.split('-').map(n => parseInt(n.trim()));
+                    if (!isNaN(start) && !isNaN(end)) {
+                        for (let i = start; i <= end; i++) {
+                            positions.push(i);
+                        }
+                    }
+                } else {
+                    const num = parseInt(trimmed);
+                    if (!isNaN(num)) {
+                        positions.push(num);
+                    }
+                }
+            }
+            
+            return [...new Set(positions)].sort((a, b) => a - b);
+        }
+
+        // Add position lock constraint
+        function addPositionLock() {
+            const range = document.getElementById('position-range').value.trim();
+            if (!range) return;
+            
+            const positions = parsePositionRange(range);
+            if (positions.length === 0) {
+                showMessage('Invalid position range format', 'error');
+                return;
+            }
+            
+            constraints.positionLocks.push(positions);
+            updateConstraintDisplay('position', `Positions: ${positions.join(', ')}`);
+            document.getElementById('position-range').value = '';
+        }
+
+        // Add exclusion pair constraint
+        function addExclusionPair() {
+            const pair = document.getElementById('exclude-pair').value.trim();
+            if (!pair) return;
+            
+            const items = pair.split(',').map(item => item.trim());
+            if (items.length !== 2) {
+                showMessage('Please enter exactly two items separated by comma', 'error');
+                return;
+            }
+            
+            constraints.exclusionPairs.push(items);
+            updateConstraintDisplay('exclude', `${items[0]} ↔ ${items[1]}`);
+            document.getElementById('exclude-pair').value = '';
+        }
+
+        // Add required pair constraint
+        function addRequiredPair() {
+            const pair = document.getElementById('require-pair').value.trim();
+            if (!pair) return;
+            
+            const items = pair.split(',').map(item => item.trim());
+            if (items.length !== 2) {
+                showMessage('Please enter exactly two items separated by comma', 'error');
+                return;
+            }
+            
+            constraints.requiredPairs.push(items);
+            updateConstraintDisplay('require', `${items[0]} + ${items[1]}`);
+            document.getElementById('require-pair').value = '';
+        }
+
+        // Update constraint display
+        function updateConstraintDisplay(type, text) {
+            const list = document.getElementById(`${type}-list`);
+            const item = document.createElement('div');
+            item.className = 'constraint-item';
+            
+            const index = type === 'position' ? constraints.positionLocks.length - 1 :
+                         type === 'exclude' ? constraints.exclusionPairs.length - 1 :
+                         constraints.requiredPairs.length - 1;
+            
+            item.innerHTML = `
+                <span>${text}</span>
+                <button class="remove-constraint" onclick="removeConstraint('${type}', ${index})">Remove</button>
+            `;
+            
+            list.appendChild(item);
+        }
+
+        // Remove constraint
+        function removeConstraint(type, index) {
+            if (type === 'position') {
+                constraints.positionLocks.splice(index, 1);
+            } else if (type === 'exclude') {
+                constraints.exclusionPairs.splice(index, 1);
+            } else if (type === 'require') {
+                constraints.requiredPairs.splice(index, 1);
+            }
+            
+            // Rebuild the constraint list display
+            rebuildConstraintDisplay(type);
+        }
+
+        // Rebuild constraint display
+        function rebuildConstraintDisplay(type) {
+            const list = document.getElementById(`${type}-list`);
+            list.innerHTML = '';
+            
+            let constraintArray, formatFunction;
+            
+            if (type === 'position') {
+                constraintArray = constraints.positionLocks;
+                formatFunction = (positions) => `Positions: ${positions.join(', ')}`;
+            } else if (type === 'exclude') {
+                constraintArray = constraints.exclusionPairs;
+                formatFunction = (pair) => `${pair[0]} ↔ ${pair[1]}`;
+            } else if (type === 'require') {
+                constraintArray = constraints.requiredPairs;
+                formatFunction = (pair) => `${pair[0]} + ${pair[1]}`;
+            }
+            
+            constraintArray.forEach((constraint, index) => {
+                const item = document.createElement('div');
+                item.className = 'constraint-item';
+                item.innerHTML = `
+                    <span>${formatFunction(constraint)}</span>
+                    <button class="remove-constraint" onclick="removeConstraint('${type}', ${index})">Remove</button>
+                `;
+                list.appendChild(item);
+            });
+        }
+
+        // Show message
+        function showMessage(text, type = 'info') {
+            const container = document.getElementById('messagesContainer');
+            const message = document.createElement('div');
+            message.className = type === 'error' ? 'error-message' : 'info-message';
+            message.textContent = text;
+            
+            container.innerHTML = '';
+            container.appendChild(message);
+            
+            setTimeout(() => {
+                if (message.parentNode) {
+                    message.parentNode.removeChild(message);
+                }
+            }, 5000);
+        }
+
+        // Shuffle array (Fisher-Yates algorithm)
+        function shuffleArray(array) {
+            const shuffled = [...array];
+            for (let i = shuffled.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+            }
+            return shuffled;
+        }
+
+        // Check if arrangement satisfies constraints
+        function satisfiesConstraints(arrangement, groupSize) {
+            // Check exclusion pairs
+            for (const [item1, item2] of constraints.exclusionPairs) {
+                const index1 = arrangement.indexOf(item1);
+                const index2 = arrangement.indexOf(item2);
+                
+                if (index1 !== -1 && index2 !== -1) {
+                    const group1 = Math.floor(index1 / groupSize);
+                    const group2 = Math.floor(index2 / groupSize);
+                    
+                    if (group1 === group2) {
+                        return false;
+                    }
+                }
+            }
+            
+            // Check required pairs
+            for (const [item1, item2] of constraints.requiredPairs) {
+                const index1 = arrangement.indexOf(item1);
+                const index2 = arrangement.indexOf(item2);
+                
+                if (index1 !== -1 && index2 !== -1) {
+                    const group1 = Math.floor(index1 / groupSize);
+                    const group2 = Math.floor(index2 / groupSize);
+                    
+                    if (group1 !== group2) {
+                        return false;
+                    }
+                }
+            }
+            
+            return true;
+        }
+
+        // Apply position locks
+        function applyPositionLocks(items) {
+            const result = [...items];
+            const lockedItems = [];
+            
+            // Collect all locked positions and their items
+            for (const positions of constraints.positionLocks) {
+                for (const pos of positions) {
+                    if (pos >= 1 && pos <= items.length) {
+                        lockedItems.push({
+                            position: pos - 1, // Convert to 0-based index
+                            item: items[pos - 1]
+                        });
+                    }
+                }
+            }
+            
+            // Remove locked items from the pool for shuffling
+            const unlocked = items.filter((item, index) => 
+                !lockedItems.some(locked => locked.position === index)
+            );
+            
+            // Shuffle only the unlocked items
+            const shuffledUnlocked = shuffleArray(unlocked);
+            
+            // Place items back, keeping locked ones in place
+            let unlockedIndex = 0;
+            for (let i = 0; i < result.length; i++) {
+                const isLocked = lockedItems.some(locked => locked.position === i);
+                if (!isLocked) {
+                    result[i] = shuffledUnlocked[unlockedIndex++];
+                }
+            }
+            
+            return result;
+        }
+
+        // Main randomization function
+        function randomizeList() {
+            const items = getItemsFromInput();
+            if (items.length === 0) {
+                showMessage('Please enter some items to randomize', 'error');
+                return;
+            }
+            
+            const groupSize = parseInt(document.getElementById('groupSize').value) || 1;
+            const btn = document.getElementById('randomizeBtn');
+            
+            // Show loading state
+            btn.innerHTML = '🎲 Randomizing... <div class="spinner"></div>';
+            btn.disabled = true;
+            
+            setTimeout(() => {
+                try {
+                    let finalArrangement;
+                    let attempts = 0;
+                    const maxAttempts = 1000;
+                    
+                    // If we have position locks, apply them first
+                    if (constraints.positionLocks.length > 0) {
+                        finalArrangement = applyPositionLocks(items);
+                        
+                        // Check if this arrangement satisfies other constraints
+                        while (!satisfiesConstraints(finalArrangement, groupSize) && attempts < maxAttempts) {
+                            finalArrangement = applyPositionLocks(items);
+                            attempts++;
+                        }
+                    } else {
+                        // No position locks, just shuffle and check constraints
+                        do {
+                            finalArrangement = shuffleArray(items);
+                            attempts++;
+                        } while (!satisfiesConstraints(finalArrangement, groupSize) && attempts < maxAttempts);
+                    }
+                    
+                    if (attempts >= maxAttempts) {
+                        showMessage('Could not find arrangement satisfying all constraints. Try relaxing some constraints.', 'error');
+                        return;
+                    }
+                    
+                    displayResults(finalArrangement, groupSize);
+                    showMessage(`Successfully randomized ${items.length} items with ${attempts} attempts!`, 'info');
+                    
+                } catch (error) {
+                    showMessage('Error during randomization: ' + error.message, 'error');
+                } finally {
+                    btn.innerHTML = '🎲 Randomize List';
+                    btn.disabled = false;
+                }
+            }, 100);
+        }
+
+        // Display results
+        function displayResults(arrangement, groupSize) {
+            const grid = document.getElementById('resultsGrid');
+            grid.innerHTML = '';
+            
+            if (groupSize === 1) {
+                // Simple list
+                const group = document.createElement('div');
+                group.className = 'result-group';
+                group.innerHTML = `
+                    <div class="group-title">Randomized List</div>
+                    <ul class="group-items">
+                        ${arrangement.map((item, index) => `<li>${index + 1}. ${item}</li>`).join('')}
+                    </ul>
+                `;
+                grid.appendChild(group);
+            } else {
+                // Groups
+                const numGroups = Math.ceil(arrangement.length / groupSize);
+                
+                for (let i = 0; i < numGroups; i++) {
+                    const startIndex = i * groupSize;
+                    const groupItems = arrangement.slice(startIndex, startIndex + groupSize);
+                    
+                    const group = document.createElement('div');
+                    group.className = 'result-group';
+                    group.innerHTML = `
+                        <div class="group-title">Group ${i + 1}</div>
+                        <ul class="group-items">
+                            ${groupItems.map(item => `<li>${item}</li>`).join('')}
+                        </ul>
+                    `;
+                    grid.appendChild(group);
+                }
+            }
+            
+            document.getElementById('resultsSection').style.display = 'block';
+        }
+
+        // Event listeners
+        document.getElementById('itemsList').addEventListener('input', updateItemCount);
+        document.getElementById('groupSize').addEventListener('change', function() {
+            const value = parseInt(this.value);
+            if (value < 1) this.value = 1;
+        });
+
+        // Initialize
+        updateItemCount();
+    </script>
+</body>
+</html>
