@@ -20,7 +20,7 @@
         }
 
         .container {
-            max-width: 1200px;
+            max-width: 1000px;
             margin: 0 auto;
             background: white;
             border-radius: 20px;
@@ -46,31 +46,81 @@
             opacity: 0.9;
         }
 
-        .main-content {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 30px;
+        .workflow-container {
             padding: 40px;
         }
 
-        .input-section {
+        .step {
             background: #f8f9fa;
             border-radius: 15px;
             padding: 30px;
+            margin-bottom: 25px;
+            border-left: 5px solid #ddd;
+            position: relative;
+            transition: all 0.3s ease;
         }
 
-        .section-title {
-            font-size: 1.5rem;
-            color: #333;
-            margin-bottom: 20px;
-            font-weight: 600;
+        .step.completed {
+            border-left-color: #28a745;
+            background: #f8fff8;
+        }
+
+        .step.active {
+            border-left-color: #feca57;
+            background: #fffef8;
+            box-shadow: 0 5px 15px rgba(254, 202, 87, 0.2);
+        }
+
+        .step.disabled {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+
+        .step-header {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .step-number {
+            background: #ddd;
+            color: #666;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.2rem;
+            transition: all 0.3s ease;
+        }
+
+        .step.completed .step-number {
+            background: #28a745;
+            color: white;
+        }
+
+        .step.active .step-number {
+            background: #feca57;
+            color: #333;
+        }
+
+        .step-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .step-description {
+            color: #666;
+            font-size: 0.95rem;
+            margin-top: 5px;
         }
 
         .input-group {
-            margin-bottom: 25px;
+            margin-bottom: 20px;
         }
 
         .input-label {
@@ -82,7 +132,7 @@
 
         .list-input {
             width: 100%;
-            min-height: 200px;
+            min-height: 150px;
             padding: 15px;
             border: 2px solid #ddd;
             border-radius: 10px;
@@ -97,161 +147,140 @@
             border-color: #667eea;
         }
 
-        .constraints-section {
-            background: #fff;
-            border: 2px solid #e9ecef;
-            border-radius: 15px;
-            padding: 30px;
-        }
-
-        .constraint-type {
-            margin-bottom: 25px;
-            padding: 20px;
-            background: #f8f9fa;
+        .multi-select {
+            width: 100%;
+            max-height: 200px;
+            padding: 10px;
+            border: 2px solid #ddd;
             border-radius: 10px;
-            border: 1px solid #dee2e6;
-        }
-
-        .constraint-header {
-            display: flex;
-            justify-content: between;
-            align-items: center;
-            margin-bottom: 15px;
-            cursor: pointer;
-        }
-
-        .constraint-title {
-            font-weight: 600;
-            color: #495057;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .toggle-btn {
-            background: #6c757d;
-            color: white;
-            border: none;
-            padding: 5px 10px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 0.8rem;
-            transition: background 0.3s ease;
-        }
-
-        .toggle-btn.active {
-            background: #667eea;
-        }
-
-        .constraint-inputs {
-            display: none;
-            grid-template-columns: 1fr auto;
-            gap: 10px;
-            align-items: center;
-            margin-top: 15px;
-        }
-
-        .constraint-inputs.active {
-            display: grid;
-        }
-
-        .constraint-input {
-            padding: 8px 12px;
-            border: 1px solid #ced4da;
-            border-radius: 5px;
-            font-size: 0.9rem;
-        }
-
-        .add-constraint-btn {
-            background: #28a745;
-            color: white;
-            border: none;
-            padding: 8px 15px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 0.9rem;
-            transition: background 0.3s ease;
-        }
-
-        .add-constraint-btn:hover {
-            background: #218838;
-        }
-
-        .constraint-list {
-            margin-top: 15px;
-        }
-
-        .constraint-item {
             background: white;
-            padding: 10px 15px;
-            margin: 5px 0;
-            border-radius: 8px;
-            border: 1px solid #dee2e6;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 0.9rem;
+            overflow-y: auto;
         }
 
-        .remove-constraint {
-            background: #dc3545;
-            color: white;
-            border: none;
-            padding: 4px 8px;
-            border-radius: 4px;
+        .select-item {
+            display: flex;
+            align-items: center;
+            padding: 8px 12px;
+            margin: 2px 0;
+            border-radius: 6px;
             cursor: pointer;
-            font-size: 0.8rem;
+            transition: background 0.2s ease;
         }
 
-        .remove-constraint:hover {
-            background: #c82333;
+        .select-item:hover {
+            background: #f0f4ff;
         }
 
-        .randomize-section {
-            grid-column: 1 / -1;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            margin-top: 20px;
-            gap: 20px;
+        .select-item.selected {
+            background: #e3f2fd;
+            border: 1px solid #2196f3;
         }
 
-        .randomize-options {
-            display: flex;
-            gap: 20px;
-            align-items: center;
-            flex-wrap: wrap;
+        .select-item input[type="checkbox"] {
+            margin-right: 10px;
+            transform: scale(1.2);
         }
 
-        .randomize-btn {
-            padding: 15px 40px;
-            background: linear-gradient(135deg, #667eea, #764ba2);
+        .dropdown {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            font-size: 1rem;
+            background: white;
+        }
+
+        .action-btn {
+            background: #667eea;
             color: white;
             border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            margin-right: 10px;
+        }
+
+        .action-btn:hover {
+            background: #5a6fd8;
+            transform: translateY(-1px);
+        }
+
+        .action-btn.secondary {
+            background: #6c757d;
+        }
+
+        .action-btn.primary {
+            background: #28a745;
+            padding: 15px 40px;
             border-radius: 50px;
             font-size: 1.1rem;
             font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
         }
 
-        .randomize-btn:hover:not(:disabled) {
+        .action-btn.primary:hover {
+            background: #218838;
             transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+            box-shadow: 0 5px 15px rgba(40, 167, 69, 0.3);
         }
 
-        .randomize-btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
+        .summary-box {
+            background: white;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
         }
 
-        .group-size-input {
-            padding: 10px;
-            border: 2px solid #ddd;
-            border-radius: 8px;
-            font-size: 1rem;
-            width: 80px;
-            text-align: center;
+        .summary-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .summary-item:last-child {
+            border-bottom: none;
+        }
+
+        .tag {
+            background: #e3f2fd;
+            color: #1976d2;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            margin: 2px;
+            display: inline-block;
+        }
+
+        .tag.exclusion {
+            background: #fff3e0;
+            color: #f57c00;
+        }
+
+        .tag.absent {
+            background: #ffebee;
+            color: #d32f2f;
+        }
+
+        .status-text {
+            font-weight: 500;
+            margin-top: 15px;
+        }
+
+        .status-text.success {
+            color: #28a745;
+        }
+
+        .status-text.info {
+            color: #667eea;
+        }
+
+        .checkmark {
+            color: #28a745;
+            font-weight: bold;
         }
 
         .results-section {
@@ -295,6 +324,12 @@
             border-left: 4px solid #667eea;
         }
 
+        .group-items li.absent {
+            border-left-color: #dc3545;
+            background: #fff5f5;
+            color: #721c24;
+        }
+
         .error-message {
             background: #f8d7da;
             color: #721c24;
@@ -313,28 +348,6 @@
             border: 1px solid #c3e6cb;
         }
 
-        @media (max-width: 768px) {
-            .main-content {
-                grid-template-columns: 1fr;
-                gap: 20px;
-                padding: 20px;
-            }
-            
-            .header h1 {
-                font-size: 2rem;
-            }
-            
-            .randomize-options {
-                justify-content: center;
-                text-align: center;
-            }
-            
-            .constraint-inputs {
-                grid-template-columns: 1fr;
-                gap: 10px;
-            }
-        }
-
         .spinner {
             display: inline-block;
             width: 20px;
@@ -350,96 +363,160 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+
+        @media (max-width: 768px) {
+            .workflow-container {
+                padding: 20px;
+            }
+            
+            .step {
+                padding: 20px;
+            }
+            
+            .step-header {
+                flex-direction: column;
+                text-align: center;
+                gap: 10px;
+            }
+            
+            .summary-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
             <h1>🎲 List Randomizer with Constraints</h1>
-            <p>Randomize your lists with custom rules and constraints</p>
+            <p>Organize your class with smart constraints in 4 easy steps</p>
         </div>
 
-        <div class="main-content">
-            <div class="input-section">
-                <div class="section-title">
-                    📝 Input List
+        <div class="workflow-container">
+            <!-- Step 1: Add Class List -->
+            <div class="step active" id="step1">
+                <div class="step-header">
+                    <div class="step-number">1</div>
+                    <div>
+                        <div class="step-title">Add Your Full Class List</div>
+                        <div class="step-description">Paste your complete prepared list - everyone who should be in class today</div>
+                    </div>
                 </div>
+                
                 <div class="input-group">
-                    <label class="input-label">Enter items (one per line):</label>
-                    <textarea class="list-input" id="itemsList" placeholder="Alice&#10;Bob&#10;Charlie&#10;Diana&#10;Eve&#10;Frank"></textarea>
+                    <label class="input-label">Class List (one name per line):</label>
+                    <textarea class="list-input" id="classList" placeholder="Alice&#10;Bob&#10;Charlie&#10;Diana&#10;Eve&#10;Frank&#10;Grace&#10;Henry"></textarea>
                 </div>
-                <div class="input-group">
-                    <div id="itemCount" style="font-size: 0.9rem; color: #666;"></div>
-                </div>
+                
+                <div id="step1Status" class="status-text info" style="display: none;"></div>
+                
+                <button class="action-btn" onclick="completeStep1()" id="step1Btn" disabled>Continue to Position Exclusions</button>
             </div>
 
-            <div class="constraints-section">
-                <div class="section-title">
-                    ⚙️ Constraints
+            <!-- Step 2: Position Exclusions -->
+            <div class="step disabled" id="step2">
+                <div class="step-header">
+                    <div class="step-number">2</div>
+                    <div>
+                        <div class="step-title">Who Can't Be First Again?</div>
+                        <div class="step-description">Select students who were in the first positions last time and shouldn't be there again</div>
+                    </div>
                 </div>
-
-                <div class="constraint-type">
-                    <div class="constraint-header" onclick="toggleConstraint('position')">
-                        <div class="constraint-title">
-                            🚫 Position Exclusions
-                            <span style="font-size: 0.8rem; color: #6c757d;">(Prevent people from being in same positions again)</span>
-                        </div>
-                        <button class="toggle-btn" id="position-toggle">Enable</button>
+                
+                <div class="input-group">
+                    <label class="input-label">Select students to exclude from first positions:</label>
+                    <div class="multi-select" id="exclusionSelect" style="display: none;">
+                        <!-- Populated dynamically -->
                     </div>
-                    <div class="constraint-inputs" id="position-inputs">
-                        <input type="text" class="constraint-input" id="position-range" placeholder="e.g., 1-4 (first 4 can't be first 4 again)">
-                        <button class="add-constraint-btn" onclick="addPositionExclusion()">Add</button>
-                    </div>
-                    <div class="constraint-list" id="position-list"></div>
                 </div>
-
-                <div class="constraint-type">
-                    <div class="constraint-header" onclick="toggleConstraint('exclude')">
-                        <div class="constraint-title">
-                            🚫 Exclusion Pairs
-                            <span style="font-size: 0.8rem; color: #6c757d;">(Items that can't be in same group)</span>
-                        </div>
-                        <button class="toggle-btn" id="exclude-toggle">Enable</button>
-                    </div>
-                    <div class="constraint-inputs" id="exclude-inputs">
-                        <input type="text" class="constraint-input" id="exclude-pair" placeholder="e.g., Alice, Bob">
-                        <button class="add-constraint-btn" onclick="addExclusionPair()">Add</button>
-                    </div>
-                    <div class="constraint-list" id="exclude-list"></div>
+                
+                <div class="input-group">
+                    <label class="input-label">Number of positions to exclude from:</label>
+                    <input type="number" value="4" min="1" id="exclusionCount" style="width: 100px; padding: 8px; border: 2px solid #ddd; border-radius: 5px;">
+                    <span style="margin-left: 10px; color: #666;">positions</span>
                 </div>
-
-                <div class="constraint-type">
-                    <div class="constraint-header" onclick="toggleConstraint('require')">
-                        <div class="constraint-title">
-                            🤝 Required Pairs
-                            <span style="font-size: 0.8rem; color: #6c757d;">(Items that must be together)</span>
-                        </div>
-                        <button class="toggle-btn" id="require-toggle">Enable</button>
-                    </div>
-                    <div class="constraint-inputs" id="require-inputs">
-                        <input type="text" class="constraint-input" id="require-pair" placeholder="e.g., Charlie, Diana">
-                        <button class="add-constraint-btn" onclick="addRequiredPair()">Add</button>
-                    </div>
-                    <div class="constraint-list" id="require-list"></div>
-                </div>
+                
+                <div id="step2Status" class="status-text info" style="display: none;"></div>
+                
+                <button class="action-btn secondary" onclick="skipStep2()">Skip This Step</button>
+                <button class="action-btn" onclick="completeStep2()" id="step2Btn">Continue to Absent Students</button>
             </div>
 
-            <div class="randomize-section">
-                <div class="randomize-options">
-                    <label>
-                        Group Size:
-                        <input type="number" class="group-size-input" id="groupSize" value="1" min="1">
-                    </label>
-                    <button class="randomize-btn" id="randomizeBtn" onclick="randomizeList()">
-                        🎲 Randomize List
-                    </button>
+            <!-- Step 3: Absent Students -->
+            <div class="step disabled" id="step3">
+                <div class="step-header">
+                    <div class="step-number">3</div>
+                    <div>
+                        <div class="step-title">Who's Absent or Late Today?</div>
+                        <div class="step-description">Mark students who aren't here yet - they'll be placed according to your preference</div>
+                    </div>
+                </div>
+                
+                <div class="input-group">
+                    <label class="input-label">Select absent/late students:</label>
+                    <div class="multi-select" id="absentSelect" style="display: none;">
+                        <!-- Populated dynamically -->
+                    </div>
+                </div>
+                
+                <div class="input-group">
+                    <label class="input-label">Where should absent students go?</label>
+                    <select class="dropdown" id="absentPlacement">
+                        <option value="last">Last groups (recommended)</option>
+                        <option value="spread">Spread evenly across all groups</option>
+                        <option value="separate">Keep in separate groups</option>
+                    </select>
+                </div>
+                
+                <div id="step3Status" class="status-text info" style="display: none;"></div>
+                
+                <button class="action-btn secondary" onclick="skipStep3()">Skip This Step</button>
+                <button class="action-btn" onclick="completeStep3()" id="step3Btn">Continue to Final Settings</button>
+            </div>
+
+            <!-- Step 4: Final Settings -->
+            <div class="step disabled" id="step4">
+                <div class="step-header">
+                    <div class="step-number">4</div>
+                    <div>
+                        <div class="step-title">Final Settings & Generate</div>
+                        <div class="step-description">Review your settings and generate the randomized groups</div>
+                    </div>
+                </div>
+                
+                <div class="summary-box" id="summaryBox">
+                    <h4 style="margin-bottom: 15px; color: #333;">Summary</h4>
+                    <!-- Populated dynamically -->
+                </div>
+                
+                <div class="input-group">
+                    <label class="input-label">Group Size:</label>
+                    <input type="number" value="3" min="1" id="groupSize" style="width: 100px; padding: 12px; border: 2px solid #ddd; border-radius: 8px;">
+                </div>
+                
+                <div style="text-align: center; margin-top: 30px;">
+                    <button class="action-btn primary" onclick="generateGroups()" id="generateBtn">🎲 Generate Randomized Groups</button>
                 </div>
             </div>
         </div>
 
         <div class="results-section" id="resultsSection">
-            <div class="section-title">
-                🎯 Results
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2 style="color: #333; font-size: 1.5rem;">🎯 Your Randomized Groups</h2>
+                <button onclick="copyToExcel()" style="
+                    padding: 10px 20px;
+                    background: #28a745;
+                    color: white;
+                    border: none;
+                    border-radius: 8px;
+                    cursor: pointer;
+                    font-size: 1rem;
+                    transition: background 0.3s ease;
+                " onmouseover="this.style.background='#218838'" onmouseout="this.style.background='#28a745'">
+                    📋 Copy for Excel
+                </button>
             </div>
             <div id="messagesContainer"></div>
             <div class="results-grid" id="resultsGrid"></div>
@@ -448,214 +525,254 @@
 
     <script>
         // Global state
-        let constraints = {
-            positionExclusions: [],
-            exclusionPairs: [],
-            requiredPairs: []
+        let classData = {
+            allStudents: [],
+            excludedStudents: [],
+            absentStudents: [],
+            exclusionCount: 4,
+            absentPlacement: 'last',
+            groupSize: 3
         };
 
-        // Update item count
-        function updateItemCount() {
-            const items = getItemsFromInput();
-            document.getElementById('itemCount').textContent = `${items.length} items`;
-        }
-
-        // Get items from textarea
-        function getItemsFromInput() {
-            const text = document.getElementById('itemsList').value;
-            return text.split('\n')
-                .map(item => item.trim())
-                .filter(item => item.length > 0);
-        }
-
-        // Toggle constraint sections
-        function toggleConstraint(type) {
-            const toggle = document.getElementById(`${type}-toggle`);
-            const inputs = document.getElementById(`${type}-inputs`);
+        // Step 1: Add class list
+        document.getElementById('classList').addEventListener('input', function() {
+            const students = this.value.split('\n')
+                .map(s => s.trim())
+                .filter(s => s.length > 0);
             
-            if (inputs.classList.contains('active')) {
-                inputs.classList.remove('active');
-                toggle.textContent = 'Enable';
-                toggle.classList.remove('active');
+            const btn = document.getElementById('step1Btn');
+            const status = document.getElementById('step1Status');
+            
+            if (students.length > 0) {
+                btn.disabled = false;
+                status.style.display = 'block';
+                status.className = 'status-text info';
+                status.innerHTML = `📝 ${students.length} students ready to add`;
             } else {
-                inputs.classList.add('active');
-                toggle.textContent = 'Disable';
-                toggle.classList.add('active');
+                btn.disabled = true;
+                status.style.display = 'none';
             }
+        });
+
+        function completeStep1() {
+            const students = document.getElementById('classList').value.split('\n')
+                .map(s => s.trim())
+                .filter(s => s.length > 0);
+            
+            classData.allStudents = students;
+            
+            // Update step 1 status
+            const status = document.getElementById('step1Status');
+            status.className = 'status-text success';
+            status.innerHTML = `<span class="checkmark">✓</span> ${students.length} students added successfully`;
+            
+            // Mark step 1 complete and activate step 2
+            document.getElementById('step1').classList.remove('active');
+            document.getElementById('step1').classList.add('completed');
+            document.getElementById('step1').querySelector('.step-number').innerHTML = '✓';
+            
+            document.getElementById('step2').classList.remove('disabled');
+            document.getElementById('step2').classList.add('active');
+            
+            // Populate step 2
+            populateExclusionSelect();
         }
 
-        // Parse position range (e.g., "1-3" or "1,2,5")
-        function parsePositionRange(range) {
-            const positions = [];
-            const parts = range.split(',');
+        function populateExclusionSelect() {
+            const select = document.getElementById('exclusionSelect');
+            select.style.display = 'block';
+            select.innerHTML = '';
             
-            for (const part of parts) {
-                const trimmed = part.trim();
-                if (trimmed.includes('-')) {
-                    const [start, end] = trimmed.split('-').map(n => parseInt(n.trim()));
-                    if (!isNaN(start) && !isNaN(end)) {
-                        for (let i = start; i <= end; i++) {
-                            positions.push(i);
-                        }
-                    }
-                } else {
-                    const num = parseInt(trimmed);
-                    if (!isNaN(num)) {
-                        positions.push(num);
-                    }
-                }
-            }
-            
-            return [...new Set(positions)].sort((a, b) => a - b);
-        }
-
-        // Add position exclusion constraint
-        function addPositionExclusion() {
-            const range = document.getElementById('position-range').value.trim();
-            if (!range) return;
-            
-            const positions = parsePositionRange(range);
-            if (positions.length === 0) {
-                showMessage('Invalid position range format', 'error');
-                return;
-            }
-            
-            const items = getItemsFromInput();
-            if (items.length === 0) {
-                showMessage('Please enter your list first before adding position exclusions', 'error');
-                return;
-            }
-            
-            // Get the people currently in those positions
-            const excludedPeople = [];
-            for (const pos of positions) {
-                if (pos >= 1 && pos <= items.length) {
-                    excludedPeople.push(items[pos - 1]);
-                }
-            }
-            
-            if (excludedPeople.length === 0) {
-                showMessage('No valid people found in those positions', 'error');
-                return;
-            }
-            
-            constraints.positionExclusions.push({
-                positions: positions,
-                people: excludedPeople
-            });
-            
-            updateConstraintDisplay('position', `Positions ${positions.join(', ')}: ${excludedPeople.join(', ')} can't be there again`);
-            document.getElementById('position-range').value = '';
-        }
-
-        // Add exclusion pair constraint
-        function addExclusionPair() {
-            const pair = document.getElementById('exclude-pair').value.trim();
-            if (!pair) return;
-            
-            const items = pair.split(',').map(item => item.trim());
-            if (items.length !== 2) {
-                showMessage('Please enter exactly two items separated by comma', 'error');
-                return;
-            }
-            
-            constraints.exclusionPairs.push(items);
-            updateConstraintDisplay('exclude', `${items[0]} ↔ ${items[1]}`);
-            document.getElementById('exclude-pair').value = '';
-        }
-
-        // Add required pair constraint
-        function addRequiredPair() {
-            const pair = document.getElementById('require-pair').value.trim();
-            if (!pair) return;
-            
-            const items = pair.split(',').map(item => item.trim());
-            if (items.length !== 2) {
-                showMessage('Please enter exactly two items separated by comma', 'error');
-                return;
-            }
-            
-            constraints.requiredPairs.push(items);
-            updateConstraintDisplay('require', `${items[0]} + ${items[1]}`);
-            document.getElementById('require-pair').value = '';
-        }
-
-        // Update constraint display
-        function updateConstraintDisplay(type, text) {
-            const list = document.getElementById(`${type}-list`);
-            const item = document.createElement('div');
-            item.className = 'constraint-item';
-            
-            const index = type === 'position' ? constraints.positionExclusions.length - 1 :
-                         type === 'exclude' ? constraints.exclusionPairs.length - 1 :
-                         constraints.requiredPairs.length - 1;
-            
-            item.innerHTML = `
-                <span>${text}</span>
-                <button class="remove-constraint" onclick="removeConstraint('${type}', ${index})">Remove</button>
-            `;
-            
-            list.appendChild(item);
-        }
-
-        // Remove constraint
-        function removeConstraint(type, index) {
-            if (type === 'position') {
-                constraints.positionExclusions.splice(index, 1);
-            } else if (type === 'exclude') {
-                constraints.exclusionPairs.splice(index, 1);
-            } else if (type === 'require') {
-                constraints.requiredPairs.splice(index, 1);
-            }
-            
-            // Rebuild the constraint list display
-            rebuildConstraintDisplay(type);
-        }
-
-        // Rebuild constraint display
-        function rebuildConstraintDisplay(type) {
-            const list = document.getElementById(`${type}-list`);
-            list.innerHTML = '';
-            
-            let constraintArray, formatFunction;
-            
-            if (type === 'position') {
-                constraintArray = constraints.positionExclusions;
-                formatFunction = (exclusion) => `Positions ${exclusion.positions.join(', ')}: ${exclusion.people.join(', ')} can't be there again`;
-            } else if (type === 'exclude') {
-                constraintArray = constraints.exclusionPairs;
-                formatFunction = (pair) => `${pair[0]} ↔ ${pair[1]}`;
-            } else if (type === 'require') {
-                constraintArray = constraints.requiredPairs;
-                formatFunction = (pair) => `${pair[0]} + ${pair[1]}`;
-            }
-            
-            constraintArray.forEach((constraint, index) => {
-                const item = document.createElement('div');
-                item.className = 'constraint-item';
-                item.innerHTML = `
-                    <span>${formatFunction(constraint)}</span>
-                    <button class="remove-constraint" onclick="removeConstraint('${type}', ${index})">Remove</button>
+            classData.allStudents.forEach((student, index) => {
+                const div = document.createElement('div');
+                div.className = 'select-item';
+                div.innerHTML = `
+                    <input type="checkbox" id="excl_${index}" onchange="updateExclusionSelection()">
+                    <span>${student}</span>
                 `;
-                list.appendChild(item);
+                div.addEventListener('click', function(e) {
+                    if (e.target.type !== 'checkbox') {
+                        const checkbox = this.querySelector('input[type="checkbox"]');
+                        checkbox.checked = !checkbox.checked;
+                        updateExclusionSelection();
+                    }
+                });
+                select.appendChild(div);
             });
         }
 
-        // Show message
-        function showMessage(text, type = 'info') {
-            const container = document.getElementById('messagesContainer');
-            const message = document.createElement('div');
-            message.className = type === 'error' ? 'error-message' : 'info-message';
-            message.textContent = text;
+        function updateExclusionSelection() {
+            const checkboxes = document.querySelectorAll('#exclusionSelect input[type="checkbox"]');
+            const selectedStudents = [];
             
-            container.innerHTML = '';
-            container.appendChild(message);
-            
-            setTimeout(() => {
-                if (message.parentNode) {
-                    message.parentNode.removeChild(message);
+            checkboxes.forEach((checkbox, index) => {
+                const item = checkbox.closest('.select-item');
+                if (checkbox.checked) {
+                    selectedStudents.push(classData.allStudents[index]);
+                    item.classList.add('selected');
+                } else {
+                    item.classList.remove('selected');
                 }
-            }, 5000);
+            });
+            
+            classData.excludedStudents = selectedStudents;
+            
+            const status = document.getElementById('step2Status');
+            if (selectedStudents.length > 0) {
+                status.style.display = 'block';
+                status.className = 'status-text info';
+                status.innerHTML = `📍 ${selectedStudents.length} students selected for position exclusion`;
+            } else {
+                status.style.display = 'none';
+            }
+        }
+
+        function skipStep2() {
+            classData.excludedStudents = [];
+            completeStep2();
+        }
+
+        function completeStep2() {
+            classData.exclusionCount = parseInt(document.getElementById('exclusionCount').value) || 4;
+            
+            // Update step 2 status
+            const status = document.getElementById('step2Status');
+            status.className = 'status-text success';
+            if (classData.excludedStudents.length > 0) {
+                status.innerHTML = `<span class="checkmark">✓</span> ${classData.excludedStudents.length} students excluded from first ${classData.exclusionCount} positions`;
+            } else {
+                status.innerHTML = `<span class="checkmark">✓</span> No position exclusions set`;
+            }
+            
+            // Mark step 2 complete and activate step 3
+            document.getElementById('step2').classList.remove('active');
+            document.getElementById('step2').classList.add('completed');
+            document.getElementById('step2').querySelector('.step-number').innerHTML = '✓';
+            
+            document.getElementById('step3').classList.remove('disabled');
+            document.getElementById('step3').classList.add('active');
+            
+            // Populate step 3
+            populateAbsentSelect();
+        }
+
+        function populateAbsentSelect() {
+            const select = document.getElementById('absentSelect');
+            select.style.display = 'block';
+            select.innerHTML = '';
+            
+            classData.allStudents.forEach((student, index) => {
+                const div = document.createElement('div');
+                div.className = 'select-item';
+                div.innerHTML = `
+                    <input type="checkbox" id="absent_${index}" onchange="updateAbsentSelection()">
+                    <span>${student}</span>
+                `;
+                div.addEventListener('click', function(e) {
+                    if (e.target.type !== 'checkbox') {
+                        const checkbox = this.querySelector('input[type="checkbox"]');
+                        checkbox.checked = !checkbox.checked;
+                        updateAbsentSelection();
+                    }
+                });
+                select.appendChild(div);
+            });
+        }
+
+        function updateAbsentSelection() {
+            const checkboxes = document.querySelectorAll('#absentSelect input[type="checkbox"]');
+            const selectedStudents = [];
+            
+            checkboxes.forEach((checkbox, index) => {
+                const item = checkbox.closest('.select-item');
+                if (checkbox.checked) {
+                    selectedStudents.push(classData.allStudents[index]);
+                    item.classList.add('selected');
+                } else {
+                    item.classList.remove('selected');
+                }
+            });
+            
+            classData.absentStudents = selectedStudents;
+            
+            const status = document.getElementById('step3Status');
+            if (selectedStudents.length > 0) {
+                status.style.display = 'block';
+                status.className = 'status-text info';
+                status.innerHTML = `👻 ${selectedStudents.length} students marked as absent/late`;
+            } else {
+                status.style.display = 'none';
+            }
+        }
+
+        function skipStep3() {
+            classData.absentStudents = [];
+            completeStep3();
+        }
+
+        function completeStep3() {
+            classData.absentPlacement = document.getElementById('absentPlacement').value;
+            
+            // Update step 3 status
+            const status = document.getElementById('step3Status');
+            status.className = 'status-text success';
+            if (classData.absentStudents.length > 0) {
+                status.innerHTML = `<span class="checkmark">✓</span> ${classData.absentStudents.length} absent students will be placed in ${classData.absentPlacement} groups`;
+            } else {
+                status.innerHTML = `<span class="checkmark">✓</span> All students present`;
+            }
+            
+            // Mark step 3 complete and activate step 4
+            document.getElementById('step3').classList.remove('active');
+            document.getElementById('step3').classList.add('completed');
+            document.getElementById('step3').querySelector('.step-number').innerHTML = '✓';
+            
+            document.getElementById('step4').classList.remove('disabled');
+            document.getElementById('step4').classList.add('active');
+            
+            // Populate summary
+            populateSummary();
+        }
+
+        function populateSummary() {
+            const summaryBox = document.getElementById('summaryBox');
+            const presentStudents = classData.allStudents.filter(s => !classData.absentStudents.includes(s));
+            
+            let html = '<h4 style="margin-bottom: 15px; color: #333;">Summary</h4>';
+            
+            html += '<div class="summary-item">';
+            html += '<span>Total Students:</span>';
+            html += `<span><strong>${classData.allStudents.length}</strong></span>`;
+            html += '</div>';
+            
+            html += '<div class="summary-item">';
+            html += '<span>Present Students:</span>';
+            html += `<span><strong>${presentStudents.length}</strong></span>`;
+            html += '</div>';
+            
+            if (classData.excludedStudents.length > 0) {
+                html += '<div class="summary-item">';
+                html += `<span>Can't be first ${classData.exclusionCount}:</span>`;
+                html += '<div>';
+                classData.excludedStudents.forEach(student => {
+                    html += `<span class="tag exclusion">${student}</span>`;
+                });
+                html += '</div>';
+                html += '</div>';
+            }
+            
+            if (classData.absentStudents.length > 0) {
+                html += '<div class="summary-item">';
+                html += '<span>Absent/Late:</span>';
+                html += '<div>';
+                classData.absentStudents.forEach(student => {
+                    html += `<span class="tag absent">${student}</span>`;
+                });
+                html += '</div>';
+                html += '</div>';
+            }
+            
+            summaryBox.innerHTML = html;
         }
 
         // Shuffle array (Fisher-Yates algorithm)
@@ -666,146 +783,6 @@
                 [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
             }
             return shuffled;
-        }
-
-        // Check if arrangement satisfies constraints
-        function satisfiesConstraints(arrangement, targetGroupSize) {
-            // Calculate optimal group sizes for constraint checking
-            const groupSizes = calculateOptimalGroups(arrangement.length, targetGroupSize);
-            
-            // Build group assignments
-            const groupAssignments = {};
-            let currentIndex = 0;
-            
-            groupSizes.forEach((size, groupIndex) => {
-                for (let i = 0; i < size; i++) {
-                    groupAssignments[arrangement[currentIndex + i]] = groupIndex;
-                }
-                currentIndex += size;
-            });
-            
-            // Check position exclusions
-            for (const exclusion of constraints.positionExclusions) {
-                for (const person of exclusion.people) {
-                    const currentPosition = arrangement.indexOf(person);
-                    if (currentPosition !== -1) {
-                        // Convert to 1-based position
-                        const position1Based = currentPosition + 1;
-                        if (exclusion.positions.includes(position1Based)) {
-                            return false; // Person is in an excluded position
-                        }
-                    }
-                }
-            }
-            
-            // Check exclusion pairs
-            for (const [item1, item2] of constraints.exclusionPairs) {
-                if (groupAssignments[item1] !== undefined && groupAssignments[item2] !== undefined) {
-                    if (groupAssignments[item1] === groupAssignments[item2]) {
-                        return false;
-                    }
-                }
-            }
-            
-            // Check required pairs
-            for (const [item1, item2] of constraints.requiredPairs) {
-                if (groupAssignments[item1] !== undefined && groupAssignments[item2] !== undefined) {
-                    if (groupAssignments[item1] !== groupAssignments[item2]) {
-                        return false;
-                    }
-                }
-            }
-            
-            return true;
-        }
-
-        // Apply position locks
-        function applyPositionLocks(items) {
-            const result = [...items];
-            const lockedItems = [];
-            
-            // Collect all locked positions and their items
-            for (const positions of constraints.positionLocks) {
-                for (const pos of positions) {
-                    if (pos >= 1 && pos <= items.length) {
-                        lockedItems.push({
-                            position: pos - 1, // Convert to 0-based index
-                            item: items[pos - 1]
-                        });
-                    }
-                }
-            }
-            
-            // Remove locked items from the pool for shuffling
-            const unlocked = items.filter((item, index) => 
-                !lockedItems.some(locked => locked.position === index)
-            );
-            
-            // Shuffle only the unlocked items
-            const shuffledUnlocked = shuffleArray(unlocked);
-            
-            // Place items back, keeping locked ones in place
-            let unlockedIndex = 0;
-            for (let i = 0; i < result.length; i++) {
-                const isLocked = lockedItems.some(locked => locked.position === i);
-                if (!isLocked) {
-                    result[i] = shuffledUnlocked[unlockedIndex++];
-                }
-            }
-            
-            return result;
-        }
-
-        // Main randomization function
-        function randomizeList() {
-            const items = getItemsFromInput();
-            if (items.length === 0) {
-                showMessage('Please enter some items to randomize', 'error');
-                return;
-            }
-            
-            const groupSize = parseInt(document.getElementById('groupSize').value) || 1;
-            const btn = document.getElementById('randomizeBtn');
-            
-            // Show loading state
-            btn.innerHTML = '🎲 Randomizing... <div class="spinner"></div>';
-            btn.disabled = true;
-            
-            setTimeout(() => {
-                try {
-                    let finalArrangement;
-                    let attempts = 0;
-                    const maxAttempts = 1000;
-                    
-                    // If we have position exclusions, we need to shuffle and check constraints
-                    if (constraints.positionExclusions.length > 0) {
-                        do {
-                            finalArrangement = shuffleArray(items);
-                            attempts++;
-                        } while (!satisfiesConstraints(finalArrangement, groupSize) && attempts < maxAttempts);
-                    } else {
-                        // No position exclusions, just shuffle and check constraints
-                        do {
-                            finalArrangement = shuffleArray(items);
-                            attempts++;
-                        } while (!satisfiesConstraints(finalArrangement, groupSize) && attempts < maxAttempts);
-                    }
-                    
-                    if (attempts >= maxAttempts) {
-                        showMessage('Could not find arrangement satisfying all constraints. Try relaxing some constraints.', 'error');
-                        return;
-                    }
-                    
-                    displayResults(finalArrangement, groupSize);
-                    showMessage(`Successfully randomized ${items.length} items with ${attempts} attempts!`, 'info');
-                    
-                } catch (error) {
-                    showMessage('Error during randomization: ' + error.message, 'error');
-                } finally {
-                    btn.innerHTML = '🎲 Randomize List';
-                    btn.disabled = false;
-                }
-            }, 100);
         }
 
         // Calculate optimal group distribution
@@ -820,112 +797,85 @@
             
             const groupSizes = [];
             for (let i = 0; i < numGroups; i++) {
-                // Distribute remainder items to first groups
                 groupSizes.push(baseSize + (i < remainder ? 1 : 0));
             }
             
             return groupSizes;
         }
 
-        // Copy results to clipboard for Excel
-        function copyToExcel() {
-            const grid = document.getElementById('resultsGrid');
-            const groups = grid.querySelectorAll('.result-group');
-            
-            let excelText = '';
-            
-            groups.forEach((group, groupIndex) => {
-                const items = group.querySelectorAll('.group-items li');
-                items.forEach(item => {
-                    // Remove numbering if present (for simple lists)
-                    let text = item.textContent;
-                    text = text.replace(/^\d+\.\s*/, ''); // Remove "1. " prefix
-                    excelText += text + '\n';
-                });
-            });
-            
-            navigator.clipboard.writeText(excelText.trim()).then(() => {
-                showMessage('List copied to clipboard! You can paste it into Excel.', 'info');
-            }).catch(() => {
-                // Fallback for older browsers
-                const textArea = document.createElement('textarea');
-                textArea.value = excelText.trim();
-                document.body.appendChild(textArea);
-                textArea.select();
-                document.execCommand('copy');
-                document.body.removeChild(textArea);
-                showMessage('List copied to clipboard! You can paste it into Excel.', 'info');
-            });
-        }
-
-        // Display results
-        function displayResults(arrangement, groupSize) {
-            const grid = document.getElementById('resultsGrid');
-            grid.innerHTML = '';
-            
-            if (groupSize === 1) {
-                // Simple list
-                const group = document.createElement('div');
-                group.className = 'result-group';
-                group.innerHTML = `
-                    <div class="group-title">Randomized List</div>
-                    <ul class="group-items">
-                        ${arrangement.map((item, index) => `<li>${index + 1}. ${item}</li>`).join('')}
-                    </ul>
-                `;
-                grid.appendChild(group);
-            } else {
-                // Calculate optimal group sizes
-                const groupSizes = calculateOptimalGroups(arrangement.length, groupSize);
-                
-                let currentIndex = 0;
-                groupSizes.forEach((size, groupIndex) => {
-                    const groupItems = arrangement.slice(currentIndex, currentIndex + size);
-                    currentIndex += size;
-                    
-                    const group = document.createElement('div');
-                    group.className = 'result-group';
-                    group.innerHTML = `
-                        <div class="group-title">Group ${groupIndex + 1} (${size} members)</div>
-                        <ul class="group-items">
-                            ${groupItems.map(item => `<li>${item}</li>`).join('')}
-                        </ul>
-                    `;
-                    grid.appendChild(group);
-                });
+        // Check if arrangement satisfies constraints
+        function satisfiesConstraints(arrangement) {
+            // Check position exclusions
+            for (const student of classData.excludedStudents) {
+                const position = arrangement.indexOf(student);
+                if (position !== -1 && position < classData.exclusionCount) {
+                    return false;
+                }
             }
             
-            // Add copy button
-            const copyButtonContainer = document.createElement('div');
-            copyButtonContainer.style.cssText = 'text-align: center; margin-top: 20px;';
-            copyButtonContainer.innerHTML = `
-                <button onclick="copyToExcel()" style="
-                    padding: 10px 20px;
-                    background: #28a745;
-                    color: white;
-                    border: none;
-                    border-radius: 8px;
-                    cursor: pointer;
-                    font-size: 1rem;
-                    transition: background 0.3s ease;
-                " onmouseover="this.style.background='#218838'" onmouseout="this.style.background='#28a745'">
-                    📋 Copy List for Excel
-                </button>
-            `;
-            grid.appendChild(copyButtonContainer);
-            
-            document.getElementById('resultsSection').style.display = 'block';
+            return true;
         }
 
-        // Event listeners
-        document.getElementById('itemsList').addEventListener('input', updateItemCount);
-        document.getElementById('groupSize').addEventListener('change', function() {
-            const value = parseInt(this.value);
-            if (value < 1) this.value = 1;
-        });
+        // Generate groups
+        function generateGroups() {
+            classData.groupSize = parseInt(document.getElementById('groupSize').value) || 3;
+            
+            const btn = document.getElementById('generateBtn');
+            btn.innerHTML = '🎲 Generating... <div class="spinner"></div>';
+            btn.disabled = true;
+            
+            setTimeout(() => {
+                try {
+                    const presentStudents = classData.allStudents.filter(s => !classData.absentStudents.includes(s));
+                    const absentStudents = classData.absentStudents;
+                    
+                    let arrangement;
+                    let attempts = 0;
+                    const maxAttempts = 1000;
+                    
+                    // Try to find valid arrangement for present students
+                    do {
+                        arrangement = shuffleArray(presentStudents);
+                        attempts++;
+                    } while (!satisfiesConstraints(arrangement) && attempts < maxAttempts);
+                    
+                    if (attempts >= maxAttempts) {
+                        showMessage('Could not find arrangement satisfying all constraints. Try relaxing some constraints.', 'error');
+                        return;
+                    }
+                    
+                    // Add absent students according to placement preference
+                    const finalArrangement = arrangeWithAbsentStudents(arrangement, absentStudents);
+                    
+                    displayResults(finalArrangement);
+                    showMessage(`Successfully randomized ${classData.allStudents.length} students with ${attempts} attempts!`, 'info');
+                    
+                } catch (error) {
+                    showMessage('Error during randomization: ' + error.message, 'error');
+                } finally {
+                    btn.innerHTML = '🎲 Generate Randomized Groups';
+                    btn.disabled = false;
+                }
+            }, 100);
+        }
 
-        // Initialize
-        updateItemCount();
-    </script>
-</body>
-</html>
+        function arrangeWithAbsentStudents(presentArrangement, absentStudents) {
+            if (absentStudents.length === 0) {
+                return presentArrangement;
+            }
+            
+            const shuffledAbsent = shuffleArray(absentStudents);
+            
+            switch (classData.absentPlacement) {
+                case 'last':
+                    return [...presentArrangement, ...shuffledAbsent];
+                case 'spread':
+                    // Interleave absent students throughout
+                    const result = [...presentArrangement];
+                    const step = Math.ceil(result.length / shuffledAbsent.length);
+                    shuffledAbsent.forEach((student, index) => {
+                        const insertPos = Math.min(result.length, (index + 1) * step);
+                        result.splice(insertPos, 0, student);
+                    });
+                    return result;
+                case '
