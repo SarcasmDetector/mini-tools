@@ -793,12 +793,10 @@
             let html = '<h5 style="margin-bottom: 10px; color: #333;">Exclusion Pairs:</h5>';
             
             classData.exclusionPairs.forEach((pair, index) => {
-                html += `
-                    <div class="constraint-item">
-                        <span>${pair[0]} ↔ ${pair[1]}</span>
-                        <button onclick="removeExclusionPair(${index})">Remove</button>
-                    </div>
-                `;
+                html += '<div class="constraint-item">';
+                html += '<span>' + pair[0] + ' ↔ ' + pair[1] + '</span>';
+                html += '<button onclick="removeExclusionPair(' + index + ')">Remove</button>';
+                html += '</div>';
             });
             
             listDiv.innerHTML = html;
