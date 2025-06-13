@@ -667,11 +667,368 @@
             checkboxes.forEach(function(checkbox, index) {
                 var item = checkbox.closest('.select-item');
                 if (checkbox.checked) {
-                    item.classList.add('selected');
-                } else {
-                    item.classList.remove('selected');
-                }
-            });
+                item.classList.add('selected');
+                                } else {
+                                    item.classList.remove('selected');
+                                }
+                            });
+                            
+                            classData.excludedStudents = selectedStudents;
+                            
+                            var status = document.getElementById('step2Status');
+                            if (selectedStudents.length > 0) {
+                                status.style.display = 'block';
+                                status.className = 'status-text info';
+                                status.innerHTML = '📍 ' + selectedStudents.length + ' students selected for position exclusion';
+                            } else {
+                                status.style.display = 'none';
+                            }
+                        }
+                
+                        function skipStep2() {
+                            classData.excludedStudents = [];
+                            completeStep2();
+                        }
+                
+                        function completeStep2() {
+                            classData.exclusionCount = parseInt(document.getElementById('exclusionCount').value) || 4;
+                            
+                            // Update step 2 status
+                            var status = document.getElementById('step2Status');
+                            status.className = 'status-text success';
+                            if (classData.excludedStudents.length > 0) {
+                                status.innerHTML = '<span class="checkmark">✓</span> ' + classData.excludedStudents.length + ' students excluded from first ' + classData.exclusionCount + ' positions';
+                            } else {
+                                status.innerHTML = '<span class="checkmark">✓</span> No position exclusions set';
+                            }
+                            
+                            // Mark step 2 complete and activate step 3
+                            document.getElementById('step2').classList.remove('active');
+                            document.getElementById('step2').classList.add('completed');
+                            document.getElementById('step2').querySelector('.step-number').innerHTML = '✓';
+                            
+                            document.getElementById('step3').classList.remove('disabled');
+                            document.getElementById('step3').classList.add('active');
+                            
+                            // Populate step 3
+                            populateExclusionPairsStep();
+                        }
+                
+                        function skipStep2() {
+                            classData.excludedStudents = [];
+                            completeStep2();
+                        }
+                
+                        function completeStep2() {
+                            classData.exclusionCount = parseInt(document.getElementById('exclusionCount').value) || 4;
+                            
+                            // Update step 2 status
+                            var status = document.getElementById('step2Status');
+                            status.className = 'status-text success';
+                            if (classData.excludedStudents.length > 0) {
+                                status.innerHTML = '<span class="checkmark">✓</span> ' + classData.excludedStudents.length + ' students excluded from first ' + classData.exclusionCount + ' positions';
+                            } else {
+                                status.innerHTML = '<span class="checkmark">✓</span> No position exclusions set';
+                            }
+                            
+                            // Mark step 2 complete and activate step 3
+                            document.getElementById('step2').classList.remove('active');
+                            document.getElementById('step2').classList.add('completed');
+                            document.getElementById('step2').querySelector('.step-number').innerHTML = '✓';
+                            
+                            document.getElementById('step3').classList.remove('disabled');
+                            document.getElementById('step3').classList.add('active');
+                            
+                            // Populate step 3
+                            populateExclusionPairsStep();
+                        }
+                            var student1Select = document.getElementById('pairStudent1');
+                            var student2Select = document.getElementById('pairStudent2');
+                            
+                            // Clear and populate both dropdowns
+                            student1Select.innerHTML = '<option value="">Choose a student...</option>';
+                            student2Select.innerHTML = '<option value="">Choose a student...</option>';
+                            
+                            classData.allStudents.forEach(function(student) {
+                                var option1 = document.createElement('option');
+                                option1.value = student;
+                                option1.textContent = student;
+                                student1Select.appendChild(option1);
+                                
+                                var option2 = document.createElement('option');
+                                option2.value = student;
+                                option2.textContent = student;
+                                student2Select.appendChild(option2);
+                            });
+                            
+                            // Add event listeners to enable/disable add button
+                            function updateAddButton() {
+                                var student1 = student1Select.value;
+                                var student2 = student2Select.value;
+                                var addBtn = document.getElementById('addPairBtn');
+                                
+                                addBtn.disabled = !student1 || !student2 || student1 === student2;
+                            }
+                            
+                            student1Select.addEventListener('change', updateAddButton);
+                            student2Select.addEventListener('change', updateAddButton);
+                            
+                            // Display existing pairs
+                            displayExclusionPairs();
+                        }
+                
+                        function addExclusionPair() {
+                            var student1 = document.getElementById('pairStudent1').value;
+                            var student2 = document.getElementById('pairStudent2').value;
+                            
+                            if (!student1 || !student2 || student1 === student2) return;
+                            
+                            // Check if pair already exists (in either order)
+                            var pairExists = classData.exclusionPairs.some(function(pair) {
+                                return (pair[0] === student1 && pair[1] === student2) || 
+                                       (pair[0] === student2 && pair[1] === student1);
+                            });
+                            
+                            if (pairExists) {
+                                showMessage('This exclusion pair already exists!', 'error');
+                                return;
+                            }
+                            
+                            // Add the pair
+                            classData.exclusionPairs.push([student1, student2]);
+                            
+                            // Reset dropdowns
+                            document.getElementById('pairStudent1').value = '';
+                            document.getElementById('pairStudent2').value = '';
+                            document.getElementById('addPairBtn').disabled = true;
+                            
+                            // Update display
+                            displayExclusionPairs();
+                            updateStep3Status();
+                        }
+                
+                        function displayExclusionPairs() {
+                            var listDiv = document.getElementById('exclusionPairsList');
+                            
+                            if (classData.exclusionPairs.length === 0) {
+                                listDiv.innerHTML = '';
+                                return;
+                            }
+                            
+                            var html = '<h5 style="margin-bottom: 10px; color: #333;">Exclusion Pairs:</h5>';
+                            
+                            classData.exclusionPairs.forEach(function(pair, index) {
+                                html += '<div class="constraint-item">';
+                                html += '<span>' + pair[0] + ' ↔ ' + pair[1] + '</span>';
+                                html += '<button onclick="removeExclusionPair(' + index + ')">Remove</button>';
+                                html += '</div>';
+                            });
+                            
+                            listDiv.innerHTML = html;
+                        }
+                
+                        function removeExclusionPair(index) {
+                            classData.exclusionPairs.splice(index, 1);
+                            displayExclusionPairs();
+                            updateStep3Status();
+                        }
+                
+                        function updateStep3Status() {
+                            var status = document.getElementById('step3Status');
+                            if (classData.exclusionPairs.length > 0) {
+                                status.style.display = 'block';
+                                status.className = 'status-text info';
+                                status.innerHTML = '🚫 ' + classData.exclusionPairs.length + ' exclusion pairs set';
+                            } else {
+                                status.style.display = 'none';
+                            }
+                        }
+                
+                        function skipStep3() {
+                            classData.exclusionPairs = [];
+                            completeStep3();
+                        }
+                
+                        function completeStep3() {
+                            // Update step 3 status
+                            var status = document.getElementById('step3Status');
+                            status.className = 'status-text success';
+                            if (classData.exclusionPairs.length > 0) {
+                                status.innerHTML = '<span class="checkmark">✓</span> ' + classData.exclusionPairs.length + ' exclusion pairs set';
+                            } else {
+                                status.innerHTML = '<span class="checkmark">✓</span> No exclusion pairs set';
+                            }
+                            
+                            // Mark step 3 complete and activate step 4
+                            document.getElementById('step3').classList.remove('active');
+                            document.getElementById('step3').classList.add('completed');
+                            document.getElementById('step3').querySelector('.step-number').innerHTML = '✓';
+                            
+                            document.getElementById('step4').classList.remove('disabled');
+                            document.getElementById('step4').classList.add('active');
+                            
+                            // Populate step 4
+                            populateAbsentSelect();
+                        }
+                
+                        function populateExclusionPairsStep() {
+                            var student1Select = document.getElementById('pairStudent1');
+                            var student2Select = document.getElementById('pairStudent2');
+                            
+                            // Clear and populate both dropdowns
+                            student1Select.innerHTML = '<option value="">Choose a student...</option>';
+                            student2Select.innerHTML = '<option value="">Choose a student...</option>';
+                            
+                            classData.allStudents.forEach(function(student) {
+                                var option1 = document.createElement('option');
+                                option1.value = student;
+                                option1.textContent = student;
+                                student1Select.appendChild(option1);
+                                
+                                var option2 = document.createElement('option');
+                                option2.value = student;
+                                option2.textContent = student;
+                                student2Select.appendChild(option2);
+                            });
+                            
+                            // Add event listeners to enable/disable add button
+                            function updateAddButton() {
+                                var student1 = student1Select.value;
+                                var student2 = student2Select.value;
+                                var addBtn = document.getElementById('addPairBtn');
+                                
+                                addBtn.disabled = !student1 || !student2 || student1 === student2;
+                            }
+                            
+                            student1Select.addEventListener('change', updateAddButton);
+                            student2Select.addEventListener('change', updateAddButton);
+                            
+                            // Display existing pairs
+                            displayExclusionPairs();
+                        }
+                
+                        function addExclusionPair() {
+                            var student1 = document.getElementById('pairStudent1').value;
+                            var student2 = document.getElementById('pairStudent2').value;
+                            
+                            if (!student1 || !student2 || student1 === student2) return;
+                            
+                            // Check if pair already exists (in either order)
+                            var pairExists = classData.exclusionPairs.some(function(pair) {
+                                return (pair[0] === student1 && pair[1] === student2) || 
+                                       (pair[0] === student2 && pair[1] === student1);
+                            });
+                            
+                            if (pairExists) {
+                                showMessage('This exclusion pair already exists!', 'error');
+                                return;
+                            }
+                            
+                            // Add the pair
+                            classData.exclusionPairs.push([student1, student2]);
+                            
+                            // Reset dropdowns
+                            document.getElementById('pairStudent1').value = '';
+                            document.getElementById('pairStudent2').value = '';
+                            document.getElementById('addPairBtn').disabled = true;
+                            
+                            // Update display
+                            displayExclusionPairs();
+                            updateStep3Status();
+                        }
+                
+                        function displayExclusionPairs() {
+                            var listDiv = document.getElementById('exclusionPairsList');
+                            
+                            if (classData.exclusionPairs.length === 0) {
+                                listDiv.innerHTML = '';
+                                return;
+                            }
+                            
+                            var html = '<h5 style="margin-bottom: 10px; color: #333;">Exclusion Pairs:</h5>';
+                            
+                            classData.exclusionPairs.forEach(function(pair, index) {
+                                html += '<div class="constraint-item">';
+                                html += '<span>' + pair[0] + ' ↔ ' + pair[1] + '</span>';
+                                html += '<button onclick="removeExclusionPair(' + index + ')">Remove</button>';
+                                html += '</div>';
+                            });
+                            
+                            listDiv.innerHTML = html;
+                        }
+                
+                        function removeExclusionPair(index) {
+                            classData.exclusionPairs.splice(index, 1);
+                            displayExclusionPairs();
+                            updateStep3Status();
+                        }
+                
+                        function updateStep3Status() {
+                            var status = document.getElementById('step3Status');
+                            if (classData.exclusionPairs.length > 0) {
+                                status.style.display = 'block';
+                                status.className = 'status-text info';
+                                status.innerHTML = '🚫 ' + classData.exclusionPairs.length + ' exclusion pairs set';
+                            } else {
+                                status.style.display = 'none';
+                            }
+                        }
+                
+                        function skipStep3() {
+                            classData.exclusionPairs = [];
+                            completeStep3();
+                        }
+                
+                        function completeStep3() {
+                            // Update step 3 status
+                            var status = document.getElementById('step3Status');
+                            status.className = 'status-text success';
+                            if (classData.exclusionPairs.length > 0) {
+                                status.innerHTML = '<span class="checkmark">✓</span> ' + classData.exclusionPairs.length + ' exclusion pairs set';
+                            } else {
+                                status.innerHTML = '<span class="checkmark">✓</span> No exclusion pairs set';
+                            }
+                            
+                            // Mark step 3 complete and activate step 4
+                            document.getElementById('step3').classList.remove('active');
+                            document.getElementById('step3').classList.add('completed');
+                            document.getElementById('step3').querySelector('.step-number').innerHTML = '✓';
+                            
+                            document.getElementById('step4').classList.remove('disabled');
+                            document.getElementById('step4').classList.add('active');
+                            
+                            // Populate step 4
+                            populateAbsentSelect();
+                        }
+                            var select = document.getElementById('absentSelect');
+                            select.style.display = 'block';
+                            select.innerHTML = '';
+                            
+                            classData.allStudents.forEach(function(student, index) {
+                                var div = document.createElement('div');
+                                div.className = 'select-item';
+                                div.innerHTML = 
+                                    '<input type="checkbox" id="absent_' + index + '" onchange="updateAbsentSelection()">' +
+                                    '<span>' + student + '</span>';
+                                div.addEventListener('click', function(e) {
+                                    if (e.target.type !== 'checkbox') {
+                                        var checkbox = this.querySelector('input[type="checkbox"]');
+                                        checkbox.checked = !checkbox.checked;
+                                        updateAbsentSelection();
+                                    }
+                                });
+                                select.appendChild(div);
+                            });
+                        }
+                
+                        function updateAbsentSelection() {
+                            var checkboxes = document.querySelectorAll('#absentSelect input[type="checkbox"]');
+                            var selectedStudents = [];
+                            
+                            checkboxes.forEach(function(checkbox, index) {
+                                var item = checkbox.closest('.select-item');
+                                if (checkbox.checked) {
+                                    selectedStudents.push(classData.allStudents[index]);
             
             classData.absentStudents = selectedStudents;
             
