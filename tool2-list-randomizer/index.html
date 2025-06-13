@@ -742,40 +742,6 @@
                             // Populate step 3
                             populateExclusionPairsStep();
                         }
-                            var student1Select = document.getElementById('pairStudent1');
-                            var student2Select = document.getElementById('pairStudent2');
-                            
-                            // Clear and populate both dropdowns
-                            student1Select.innerHTML = '<option value="">Choose a student...</option>';
-                            student2Select.innerHTML = '<option value="">Choose a student...</option>';
-                            
-                            classData.allStudents.forEach(function(student) {
-                                var option1 = document.createElement('option');
-                                option1.value = student;
-                                option1.textContent = student;
-                                student1Select.appendChild(option1);
-                                
-                                var option2 = document.createElement('option');
-                                option2.value = student;
-                                option2.textContent = student;
-                                student2Select.appendChild(option2);
-                            });
-                            
-                            // Add event listeners to enable/disable add button
-                            function updateAddButton() {
-                                var student1 = student1Select.value;
-                                var student2 = student2Select.value;
-                                var addBtn = document.getElementById('addPairBtn');
-                                
-                                addBtn.disabled = !student1 || !student2 || student1 === student2;
-                            }
-                            
-                            student1Select.addEventListener('change', updateAddButton);
-                            student2Select.addEventListener('change', updateAddButton);
-                            
-                            // Display existing pairs
-                            displayExclusionPairs();
-                        }
                 
                         function addExclusionPair() {
                             var student1 = document.getElementById('pairStudent1').value;
