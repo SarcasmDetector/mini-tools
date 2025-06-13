@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -416,7 +417,7 @@
     <div class="container">
         <div class="header">
             <h1>🎲 List Randomizer with Constraints</h1>
-            <p>Organize your class with smart constraints in 4 easy steps</p>
+            <p>Organize your class with smart constraints in 5 easy steps</p>
         </div>
 
         <div class="workflow-container">
@@ -466,7 +467,7 @@
                 <div id="step2Status" class="status-text info" style="display: none;"></div>
                 
                 <button class="action-btn secondary" onclick="skipStep2()">Skip This Step</button>
-                <button class="action-btn" onclick="completeStep2()" id="step2Btn">Continue to Absent Students</button>
+                <button class="action-btn" onclick="completeStep2()" id="step2Btn">Continue to Exclusion Pairs</button>
             </div>
 
             <!-- Step 3: Exclusion Pairs -->
@@ -584,7 +585,7 @@
 
     <script>
         // Global state
-        let classData = {
+        var classData = {
             allStudents: [],
             excludedStudents: [],
             absentStudents: [],
@@ -596,18 +597,18 @@
 
         // Step 1: Add class list
         document.getElementById('classList').addEventListener('input', function() {
-            const students = this.value.split('\n')
-                .map(s => s.trim())
-                .filter(s => s.length > 0);
+            var students = this.value.split('\n')
+                .map(function(s) { return s.trim(); })
+                .filter(function(s) { return s.length > 0; });
             
-            const btn = document.getElementById('step1Btn');
-            const status = document.getElementById('step1Status');
+            var btn = document.getElementById('step1Btn');
+            var status = document.getElementById('step1Status');
             
             if (students.length > 0) {
                 btn.disabled = false;
                 status.style.display = 'block';
                 status.className = 'status-text info';
-                status.innerHTML = `📝 ${students.length} students ready to add`;
+                status.innerHTML = '📝 ' + students.length + ' students ready to add';
             } else {
                 btn.disabled = true;
                 status.style.display = 'none';
@@ -615,16 +616,16 @@
         });
 
         function completeStep1() {
-            const students = document.getElementById('classList').value.split('\n')
-                .map(s => s.trim())
-                .filter(s => s.length > 0);
+            var students = document.getElementById('classList').value.split('\n')
+                .map(function(s) { return s.trim(); })
+                .filter(function(s) { return s.length > 0; });
             
             classData.allStudents = students;
             
             // Update step 1 status
-            const status = document.getElementById('step1Status');
+            var status = document.getElementById('step1Status');
             status.className = 'status-text success';
-            status.innerHTML = `<span class="checkmark">✓</span> ${students.length} students added successfully`;
+            status.innerHTML = '<span class="checkmark">✓</span> ' + students.length + ' students added successfully';
             
             // Mark step 1 complete and activate step 2
             document.getElementById('step1').classList.remove('active');
@@ -639,20 +640,19 @@
         }
 
         function populateExclusionSelect() {
-            const select = document.getElementById('exclusionSelect');
+            var select = document.getElementById('exclusionSelect');
             select.style.display = 'block';
             select.innerHTML = '';
             
-            classData.allStudents.forEach((student, index) => {
-                const div = document.createElement('div');
+            classData.allStudents.forEach(function(student, index) {
+                var div = document.createElement('div');
                 div.className = 'select-item';
-                div.innerHTML = `
-                    <input type="checkbox" id="excl_${index}" onchange="updateExclusionSelection()">
-                    <span>${student}</span>
-                `;
+                div.innerHTML = 
+                    '<input type="checkbox" id="excl_' + index + '" onchange="updateExclusionSelection()">' +
+                    '<span>' + student + '</span>';
                 div.addEventListener('click', function(e) {
                     if (e.target.type !== 'checkbox') {
-                        const checkbox = this.querySelector('input[type="checkbox"]');
+                        var checkbox = this.querySelector('input[type="checkbox"]');
                         checkbox.checked = !checkbox.checked;
                         updateExclusionSelection();
                     }
@@ -662,242 +662,12 @@
         }
 
         function updateExclusionSelection() {
-            const checkboxes = document.querySelectorAll('#exclusionSelect input[type="checkbox"]');
-            const selectedStudents = [];
+            var checkboxes = document.querySelectorAll('#exclusionSelect input[type="checkbox"]');
+            var selectedStudents = [];
             
-            checkboxes.forEach((checkbox, index) => {
-                const item = checkbox.closest('.select-item');
+            checkboxes.forEach(function(checkbox, index) {
+                var item = checkbox.closest('.select-item');
                 if (checkbox.checked) {
-                    selectedStudents.push(classData.allStudents[index]);
-                    item.classList.add('selected');
-                } else {
-                    item.classList.remove('selected');
-                }
-            });
-            
-            classData.excludedStudents = selectedStudents;
-            
-            const status = document.getElementById('step2Status');
-            if (selectedStudents.length > 0) {
-                status.style.display = 'block';
-                status.className = 'status-text info';
-                status.innerHTML = `📍 ${selectedStudents.length} students selected for position exclusion`;
-            } else {
-                status.style.display = 'none';
-            }
-        }
-
-        function skipStep2() {
-            classData.excludedStudents = [];
-            completeStep2();
-        }
-
-        function completeStep2() {
-            classData.exclusionCount = parseInt(document.getElementById('exclusionCount').value) || 4;
-            
-            // Update step 2 status
-            const status = document.getElementById('step2Status');
-            status.className = 'status-text success';
-            if (classData.excludedStudents.length > 0) {
-                status.innerHTML = `<span class="checkmark">✓</span> ${classData.excludedStudents.length} students excluded from first ${classData.exclusionCount} positions`;
-            } else {
-                status.innerHTML = `<span class="checkmark">✓</span> No position exclusions set`;
-            }
-            
-            // Mark step 2 complete and activate step 3
-            document.getElementById('step2').classList.remove('active');
-            document.getElementById('step2').classList.add('completed');
-            document.getElementById('step2').querySelector('.step-number').innerHTML = '✓';
-            
-            document.getElementById('step3').classList.remove('disabled');
-            document.getElementById('step3').classList.add('active');
-            
-            // Populate step 3
-            populateExclusionPairsStep();
-        }
-
-        function populateExclusionPairsStep() {
-            const student1Select = document.getElementById('pairStudent1');
-            const student2Select = document.getElementById('pairStudent2');
-            
-            // Clear and populate both dropdowns
-            student1Select.innerHTML = '<option value="">Choose a student...</option>';
-            student2Select.innerHTML = '<option value="">Choose a student...</option>';
-            
-            classData.allStudents.forEach(student => {
-                const option1 = document.createElement('option');
-                option1.value = student;
-                option1.textContent = student;
-                student1Select.appendChild(option1);
-                
-                const option2 = document.createElement('option');
-                option2.value = student;
-                option2.textContent = student;
-                student2Select.appendChild(option2);
-            });
-            
-            // Add event listeners to enable/disable add button
-            function updateAddButton() {
-                const student1 = student1Select.value;
-                const student2 = student2Select.value;
-                const addBtn = document.getElementById('addPairBtn');
-                
-                addBtn.disabled = !student1 || !student2 || student1 === student2;
-            }
-            
-            student1Select.addEventListener('change', updateAddButton);
-            student2Select.addEventListener('change', updateAddButton);
-            
-            // Display existing pairs
-            displayExclusionPairs();
-        }
-
-        function addExclusionPair() {
-            const student1 = document.getElementById('pairStudent1').value;
-            const student2 = document.getElementById('pairStudent2').value;
-            
-            if (!student1 || !student2 || student1 === student2) return;
-            
-            // Check if pair already exists (in either order)
-            const pairExists = classData.exclusionPairs.some(pair => 
-                (pair[0] === student1 && pair[1] === student2) || 
-                (pair[0] === student2 && pair[1] === student1)
-            );
-            
-            if (pairExists) {
-                showMessage('This exclusion pair already exists!', 'error');
-                return;
-            }
-            
-            // Add the pair
-            classData.exclusionPairs.push([student1, student2]);
-            
-            // Reset dropdowns
-            document.getElementById('pairStudent1').value = '';
-            document.getElementById('pairStudent2').value = '';
-            document.getElementById('addPairBtn').disabled = true;
-            
-            // Update display
-            displayExclusionPairs();
-            updateStep3Status();
-        }
-
-        function displayExclusionPairs() {
-            const listDiv = document.getElementById('exclusionPairsList');
-            
-            if (classData.exclusionPairs.length === 0) {
-                listDiv.innerHTML = '';
-                return;
-            }
-            
-            let html = '<h5 style="margin-bottom: 10px; color: #333;">Exclusion Pairs:</h5>';
-            
-            classData.exclusionPairs.forEach((pair, index) => {
-                html += '<div class="constraint-item">';
-                html += '<span>' + pair[0] + ' ↔ ' + pair[1] + '</span>';
-                html += '<button onclick="removeExclusionPair(' + index + ')">Remove</button>';
-                html += '</div>';
-            });
-            
-            listDiv.innerHTML = html;
-        }
-
-        function removeExclusionPair(index) {
-            classData.exclusionPairs.splice(index, 1);
-            displayExclusionPairs();
-            updateStep3Status();
-        }
-
-        function updateStep3Status() {
-            const status = document.getElementById('step3Status');
-            if (classData.exclusionPairs.length > 0) {
-                status.style.display = 'block';
-                status.className = 'status-text info';
-                status.innerHTML = `🚫 ${classData.exclusionPairs.length} exclusion pairs set`;
-            } else {
-                status.style.display = 'none';
-            }
-        }
-
-        function skipStep3() {
-            classData.exclusionPairs = [];
-            completeStep3();
-        }
-
-        function completeStep3() {
-            // Update step 3 status
-            const status = document.getElementById('step3Status');
-            status.className = 'status-text success';
-            if (classData.exclusionPairs.length > 0) {
-                status.innerHTML = `<span class="checkmark">✓</span> ${classData.exclusionPairs.length} exclusion pairs set`;
-            } else {
-                status.innerHTML = `<span class="checkmark">✓</span> No exclusion pairs set`;
-            }
-            
-            // Mark step 3 complete and activate step 4
-            document.getElementById('step3').classList.remove('active');
-            document.getElementById('step3').classList.add('completed');
-            document.getElementById('step3').querySelector('.step-number').innerHTML = '✓';
-            
-            document.getElementById('step4').classList.remove('disabled');
-            document.getElementById('step4').classList.add('active');
-            
-            // Populate step 4
-            populateAbsentSelect();
-        }
-            const select = document.getElementById('absentSelect');
-            select.style.display = 'block';
-            select.innerHTML = '';
-            
-            classData.allStudents.forEach((student, index) => {
-                const div = document.createElement('div');
-                div.className = 'select-item';
-                div.innerHTML = `
-                    <input type="checkbox" id="absent_${index}" onchange="updateAbsentSelection()">
-                    <span>${student}</span>
-                `;
-                div.addEventListener('click', function(e) {
-                    if (e.target.type !== 'checkbox') {
-                        const checkbox = this.querySelector('input[type="checkbox"]');
-                        checkbox.checked = !checkbox.checked;
-                        updateAbsentSelection();
-                    }
-                });
-                select.appendChild(div);
-            });
-        }
-
-        function populateAbsentSelect() {
-            const select = document.getElementById('absentSelect');
-            select.style.display = 'block';
-            select.innerHTML = '';
-            
-            classData.allStudents.forEach((student, index) => {
-                const div = document.createElement('div');
-                div.className = 'select-item';
-                div.innerHTML = `
-                    <input type="checkbox" id="absent_${index}" onchange="updateAbsentSelection()">
-                    <span>${student}</span>
-                `;
-                div.addEventListener('click', function(e) {
-                    if (e.target.type !== 'checkbox') {
-                        const checkbox = this.querySelector('input[type="checkbox"]');
-                        checkbox.checked = !checkbox.checked;
-                        updateAbsentSelection();
-                    }
-                });
-                select.appendChild(div);
-            });
-        }
-
-        function updateAbsentSelection() {
-            const checkboxes = document.querySelectorAll('#absentSelect input[type="checkbox"]');
-            const selectedStudents = [];
-            
-            checkboxes.forEach((checkbox, index) => {
-                const item = checkbox.closest('.select-item');
-                if (checkbox.checked) {
-                    selectedStudents.push(classData.allStudents[index]);
                     item.classList.add('selected');
                 } else {
                     item.classList.remove('selected');
@@ -906,11 +676,11 @@
             
             classData.absentStudents = selectedStudents;
             
-            const status = document.getElementById('step4Status');
+            var status = document.getElementById('step4Status');
             if (selectedStudents.length > 0) {
                 status.style.display = 'block';
                 status.className = 'status-text info';
-                status.innerHTML = `👻 ${selectedStudents.length} students marked as absent/late`;
+                status.innerHTML = '👻 ' + selectedStudents.length + ' students marked as absent/late';
             } else {
                 status.style.display = 'none';
             }
@@ -925,23 +695,12 @@
             classData.absentPlacement = document.getElementById('absentPlacement').value;
             
             // Update step 4 status
-            const status = document.getElementById('step4Status');
+            var status = document.getElementById('step4Status');
             status.className = 'status-text success';
-            if (classData.exclusionPairs.length > 0) {
-                html += '<div class="summary-item">';
-                html += '<span>Exclusion Pairs:</span>';
-                html += '<div>';
-                classData.exclusionPairs.forEach(pair => {
-                    html += `<span class="tag exclusion">${pair[0]} ↔ ${pair[1]}</span>`;
-                });
-                html += '</div>';
-                html += '</div>';
-            }
-            
             if (classData.absentStudents.length > 0) {
-                status.innerHTML = `<span class="checkmark">✓</span> ${classData.absentStudents.length} absent students will be placed in ${classData.absentPlacement} groups`;
+                status.innerHTML = '<span class="checkmark">✓</span> ' + classData.absentStudents.length + ' absent students will be placed in ' + classData.absentPlacement + ' groups';
             } else {
-                status.innerHTML = `<span class="checkmark">✓</span> All students present`;
+                status.innerHTML = '<span class="checkmark">✓</span> All students present';
             }
             
             // Mark step 4 complete and activate step 5
@@ -957,27 +716,40 @@
         }
 
         function populateSummary() {
-            const summaryBox = document.getElementById('summaryBox');
-            const presentStudents = classData.allStudents.filter(s => !classData.absentStudents.includes(s));
+            var summaryBox = document.getElementById('summaryBox');
+            var presentStudents = classData.allStudents.filter(function(s) {
+                return !classData.absentStudents.includes(s);
+            });
             
-            let html = '<h4 style="margin-bottom: 15px; color: #333;">Summary</h4>';
+            var html = '<h4 style="margin-bottom: 15px; color: #333;">Summary</h4>';
             
             html += '<div class="summary-item">';
             html += '<span>Total Students:</span>';
-            html += `<span><strong>${classData.allStudents.length}</strong></span>`;
+            html += '<span><strong>' + classData.allStudents.length + '</strong></span>';
             html += '</div>';
             
             html += '<div class="summary-item">';
             html += '<span>Present Students:</span>';
-            html += `<span><strong>${presentStudents.length}</strong></span>`;
+            html += '<span><strong>' + presentStudents.length + '</strong></span>';
             html += '</div>';
             
             if (classData.excludedStudents.length > 0) {
                 html += '<div class="summary-item">';
-                html += `<span>Can't be first ${classData.exclusionCount}:</span>`;
+                html += '<span>Can\'t be first ' + classData.exclusionCount + ':</span>';
                 html += '<div>';
-                classData.excludedStudents.forEach(student => {
-                    html += `<span class="tag exclusion">${student}</span>`;
+                classData.excludedStudents.forEach(function(student) {
+                    html += '<span class="tag exclusion">' + student + '</span>';
+                });
+                html += '</div>';
+                html += '</div>';
+            }
+            
+            if (classData.exclusionPairs.length > 0) {
+                html += '<div class="summary-item">';
+                html += '<span>Exclusion Pairs:</span>';
+                html += '<div>';
+                classData.exclusionPairs.forEach(function(pair) {
+                    html += '<span class="tag exclusion">' + pair[0] + ' ↔ ' + pair[1] + '</span>';
                 });
                 html += '</div>';
                 html += '</div>';
@@ -987,8 +759,8 @@
                 html += '<div class="summary-item">';
                 html += '<span>Absent/Late:</span>';
                 html += '<div>';
-                classData.absentStudents.forEach(student => {
-                    html += `<span class="tag absent">${student}</span>`;
+                classData.absentStudents.forEach(function(student) {
+                    html += '<span class="tag absent">' + student + '</span>';
                 });
                 html += '</div>';
                 html += '</div>';
@@ -999,10 +771,12 @@
 
         // Shuffle array (Fisher-Yates algorithm)
         function shuffleArray(array) {
-            const shuffled = [...array];
-            for (let i = shuffled.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+            var shuffled = array.slice();
+            for (var i = shuffled.length - 1; i > 0; i--) {
+                var j = Math.floor(Math.random() * (i + 1));
+                var temp = shuffled[i];
+                shuffled[i] = shuffled[j];
+                shuffled[j] = temp;
             }
             return shuffled;
         }
@@ -1013,12 +787,12 @@
                 return [totalItems];
             }
             
-            const numGroups = Math.ceil(totalItems / targetGroupSize);
-            const baseSize = Math.floor(totalItems / numGroups);
-            const remainder = totalItems % numGroups;
+            var numGroups = Math.ceil(totalItems / targetGroupSize);
+            var baseSize = Math.floor(totalItems / numGroups);
+            var remainder = totalItems % numGroups;
             
-            const groupSizes = [];
-            for (let i = 0; i < numGroups; i++) {
+            var groupSizes = [];
+            for (var i = 0; i < numGroups; i++) {
                 groupSizes.push(baseSize + (i < remainder ? 1 : 0));
             }
             
@@ -1028,22 +802,27 @@
         // Check if arrangement satisfies constraints
         function satisfiesConstraints(arrangement) {
             // Check position exclusions
-            for (const student of classData.excludedStudents) {
-                const position = arrangement.indexOf(student);
+            for (var i = 0; i < classData.excludedStudents.length; i++) {
+                var student = classData.excludedStudents[i];
+                var position = arrangement.indexOf(student);
                 if (position !== -1 && position < classData.exclusionCount) {
                     return false;
                 }
             }
             
             // Check exclusion pairs
-            const groupSizes = calculateOptimalGroups(arrangement.length, classData.groupSize);
-            let currentIndex = 0;
+            var groupSizes = calculateOptimalGroups(arrangement.length, classData.groupSize);
+            var currentIndex = 0;
             
-            for (const groupSize of groupSizes) {
-                const groupMembers = arrangement.slice(currentIndex, currentIndex + groupSize);
+            for (var g = 0; g < groupSizes.length; g++) {
+                var groupSize = groupSizes[g];
+                var groupMembers = arrangement.slice(currentIndex, currentIndex + groupSize);
                 
                 // Check if any exclusion pair is in this group
-                for (const [student1, student2] of classData.exclusionPairs) {
+                for (var p = 0; p < classData.exclusionPairs.length; p++) {
+                    var pair = classData.exclusionPairs[p];
+                    var student1 = pair[0];
+                    var student2 = pair[1];
                     if (groupMembers.includes(student1) && groupMembers.includes(student2)) {
                         return false;
                     }
@@ -1060,33 +839,32 @@
                 return presentArrangement;
             }
             
-            const shuffledAbsent = shuffleArray(absentStudents);
+            var shuffledAbsent = shuffleArray(absentStudents);
             
             switch (classData.absentPlacement) {
                 case 'last':
                     // Smart distribution: place absent students backwards through groups
-                    // to keep groups balanced and avoid tiny final groups
-                    const groupSizes = calculateOptimalGroups(presentArrangement.length, classData.groupSize);
-                    let result = [...presentArrangement];
+                    var groupSizes = calculateOptimalGroups(presentArrangement.length, classData.groupSize);
+                    var result = presentArrangement.slice();
                     
                     // Calculate insertion points (working backwards from the end)
-                    const insertionPoints = [];
-                    let currentPos = result.length;
+                    var insertionPoints = [];
+                    var currentPos = result.length;
                     
                     // Work backwards through groups to create insertion points
-                    for (let i = groupSizes.length - 1; i >= 0; i--) {
+                    for (var i = groupSizes.length - 1; i >= 0; i--) {
                         insertionPoints.unshift(currentPos);
                         currentPos -= groupSizes[i];
                     }
                     
                     // Distribute absent students backwards through groups
-                    shuffledAbsent.forEach((student, index) => {
-                        const groupIndex = (groupSizes.length - 1) - (index % groupSizes.length);
-                        const insertPos = insertionPoints[groupIndex];
+                    shuffledAbsent.forEach(function(student, index) {
+                        var groupIndex = (groupSizes.length - 1) - (index % groupSizes.length);
+                        var insertPos = insertionPoints[groupIndex];
                         result.splice(insertPos, 0, student);
                         
                         // Update subsequent insertion points
-                        for (let j = groupIndex; j < insertionPoints.length; j++) {
+                        for (var j = groupIndex; j < insertionPoints.length; j++) {
                             insertionPoints[j]++;
                         }
                     });
@@ -1095,58 +873,57 @@
                     
                 case 'spread':
                     // Interleave absent students throughout
-                    const spreadResult = [...presentArrangement];
-                    const step = Math.ceil(spreadResult.length / shuffledAbsent.length);
-                    shuffledAbsent.forEach((student, index) => {
-                        const insertPos = Math.min(spreadResult.length, (index + 1) * step);
+                    var spreadResult = presentArrangement.slice();
+                    var step = Math.ceil(spreadResult.length / shuffledAbsent.length);
+                    shuffledAbsent.forEach(function(student, index) {
+                        var insertPos = Math.min(spreadResult.length, (index + 1) * step);
                         spreadResult.splice(insertPos, 0, student);
                     });
                     return spreadResult;
                     
                 case 'separate':
                 default:
-                    return [...presentArrangement, ...shuffledAbsent];
+                    return presentArrangement.concat(shuffledAbsent);
             }
         }
 
         // Generate groups
         function generateGroups() {
-            // Always read current settings to fix issue #1
+            // Always read current settings
             classData.groupSize = parseInt(document.getElementById('groupSize').value) || 3;
             classData.absentPlacement = document.getElementById('absentPlacement').value;
             classData.exclusionCount = parseInt(document.getElementById('exclusionCount').value) || 4;
             
             // Re-read excluded students from current selections
-            const excludedCheckboxes = document.querySelectorAll('#exclusionSelect input[type="checkbox"]:checked');
-            classData.excludedStudents = Array.from(excludedCheckboxes).map((checkbox) => {
-                const allCheckboxes = document.querySelectorAll('#exclusionSelect input[type="checkbox"]');
-                const checkboxIndex = Array.from(allCheckboxes).indexOf(checkbox);
+            var excludedCheckboxes = document.querySelectorAll('#exclusionSelect input[type="checkbox"]:checked');
+            classData.excludedStudents = Array.from(excludedCheckboxes).map(function(checkbox) {
+                var allCheckboxes = document.querySelectorAll('#exclusionSelect input[type="checkbox"]');
+                var checkboxIndex = Array.from(allCheckboxes).indexOf(checkbox);
                 return classData.allStudents[checkboxIndex];
             });
             
             // Re-read absent students from current selections
-            const absentCheckboxes = document.querySelectorAll('#absentSelect input[type="checkbox"]:checked');
-            classData.absentStudents = Array.from(absentCheckboxes).map((checkbox) => {
-                const allCheckboxes = document.querySelectorAll('#absentSelect input[type="checkbox"]');
-                const checkboxIndex = Array.from(allCheckboxes).indexOf(checkbox);
+            var absentCheckboxes = document.querySelectorAll('#absentSelect input[type="checkbox"]:checked');
+            classData.absentStudents = Array.from(absentCheckboxes).map(function(checkbox) {
+                var allCheckboxes = document.querySelectorAll('#absentSelect input[type="checkbox"]');
+                var checkboxIndex = Array.from(allCheckboxes).indexOf(checkbox);
                 return classData.allStudents[checkboxIndex];
             });
             
-            // Re-read exclusion pairs (they're stored in classData.exclusionPairs already)
-            // No need to re-read as they're managed through the UI directly
-            
-            const btn = document.getElementById('generateBtn');
+            var btn = document.getElementById('generateBtn');
             btn.innerHTML = '🎲 Generating... <div class="spinner"></div>';
             btn.disabled = true;
             
-            setTimeout(() => {
+            setTimeout(function() {
                 try {
-                    const presentStudents = classData.allStudents.filter(s => !classData.absentStudents.includes(s));
-                    const absentStudents = classData.absentStudents;
+                    var presentStudents = classData.allStudents.filter(function(s) {
+                        return !classData.absentStudents.includes(s);
+                    });
+                    var absentStudents = classData.absentStudents;
                     
-                    let arrangement;
-                    let attempts = 0;
-                    const maxAttempts = 1000;
+                    var arrangement;
+                    var attempts = 0;
+                    var maxAttempts = 1000;
                     
                     // Try to find valid arrangement for present students
                     do {
@@ -1160,10 +937,10 @@
                     }
                     
                     // Add absent students according to placement preference
-                    const finalArrangement = arrangeWithAbsentStudents(arrangement, absentStudents);
+                    var finalArrangement = arrangeWithAbsentStudents(arrangement, absentStudents);
                     
                     displayResults(finalArrangement);
-                    showMessage(`Successfully randomized ${classData.allStudents.length} students with ${attempts} attempts!`, 'info');
+                    showMessage('Successfully randomized ' + classData.allStudents.length + ' students with ' + attempts + ' attempts!', 'info');
                     
                 } catch (error) {
                     showMessage('Error during randomization: ' + error.message, 'error');
@@ -1176,47 +953,46 @@
 
         // Display results
         function displayResults(arrangement) {
-            const grid = document.getElementById('resultsGrid');
+            var grid = document.getElementById('resultsGrid');
             grid.innerHTML = '';
             
             if (classData.groupSize === 1) {
                 // Simple list
-                const group = document.createElement('div');
+                var group = document.createElement('div');
                 group.className = 'result-group';
-                group.innerHTML = `
-                    <div class="group-title">Randomized List</div>
-                    <ul class="group-items">
-                        ${arrangement.map((item, index) => {
-                            const isAbsent = classData.absentStudents.includes(item);
-                            return `<li class="${isAbsent ? 'absent' : ''}">${index + 1}. ${item}${isAbsent ? ' (absent)' : ''}</li>`;
-                        }).join('')}
-                    </ul>
-                `;
+                var listHtml = '<div class="group-title">Randomized List</div><ul class="group-items">';
+                arrangement.forEach(function(item, index) {
+                    var isAbsent = classData.absentStudents.includes(item);
+                    listHtml += '<li class="' + (isAbsent ? 'absent' : '') + '">' + (index + 1) + '. ' + item + (isAbsent ? ' (absent)' : '') + '</li>';
+                });
+                listHtml += '</ul>';
+                group.innerHTML = listHtml;
                 grid.appendChild(group);
             } else {
                 // Calculate optimal group sizes
-                const groupSizes = calculateOptimalGroups(arrangement.length, classData.groupSize);
+                var groupSizes = calculateOptimalGroups(arrangement.length, classData.groupSize);
                 
-                let currentIndex = 0;
-                groupSizes.forEach((size, groupIndex) => {
-                    const groupItems = arrangement.slice(currentIndex, currentIndex + size);
+                var currentIndex = 0;
+                groupSizes.forEach(function(size, groupIndex) {
+                    var groupItems = arrangement.slice(currentIndex, currentIndex + size);
                     currentIndex += size;
                     
-                    const group = document.createElement('div');
+                    var group = document.createElement('div');
                     group.className = 'result-group';
                     
-                    const absentCount = groupItems.filter(item => classData.absentStudents.includes(item)).length;
-                    const presentCount = size - absentCount;
+                    var absentCount = groupItems.filter(function(item) {
+                        return classData.absentStudents.includes(item);
+                    }).length;
+                    var presentCount = size - absentCount;
                     
-                    group.innerHTML = `
-                        <div class="group-title">Group ${groupIndex + 1} (${presentCount} present${absentCount > 0 ? `, ${absentCount} absent` : ''})</div>
-                        <ul class="group-items">
-                            ${groupItems.map(item => {
-                                const isAbsent = classData.absentStudents.includes(item);
-                                return `<li class="${isAbsent ? 'absent' : ''}">${item}${isAbsent ? ' (absent)' : ''}</li>`;
-                            }).join('')}
-                        </ul>
-                    `;
+                    var groupHtml = '<div class="group-title">Group ' + (groupIndex + 1) + ' (' + presentCount + ' present' + (absentCount > 0 ? ', ' + absentCount + ' absent' : '') + ')</div>';
+                    groupHtml += '<ul class="group-items">';
+                    groupItems.forEach(function(item) {
+                        var isAbsent = classData.absentStudents.includes(item);
+                        groupHtml += '<li class="' + (isAbsent ? 'absent' : '') + '">' + item + (isAbsent ? ' (absent)' : '') + '</li>';
+                    });
+                    groupHtml += '</ul>';
+                    group.innerHTML = groupHtml;
                     grid.appendChild(group);
                 });
             }
@@ -1226,27 +1002,27 @@
 
         // Copy results to clipboard for Excel
         function copyToExcel() {
-            const grid = document.getElementById('resultsGrid');
-            const groups = grid.querySelectorAll('.result-group');
+            var grid = document.getElementById('resultsGrid');
+            var groups = grid.querySelectorAll('.result-group');
             
-            let excelText = '';
+            var excelText = '';
             
-            groups.forEach((group, groupIndex) => {
-                const items = group.querySelectorAll('.group-items li');
-                items.forEach(item => {
+            groups.forEach(function(group) {
+                var items = group.querySelectorAll('.group-items li');
+                items.forEach(function(item) {
                     // Remove numbering and absent markers for clean Excel data
-                    let text = item.textContent;
+                    var text = item.textContent;
                     text = text.replace(/^\d+\.\s*/, ''); // Remove "1. " prefix
                     text = text.replace(/\s*\(absent\)\s*$/, ''); // Remove "(absent)" suffix
                     excelText += text + '\n';
                 });
             });
             
-            navigator.clipboard.writeText(excelText.trim()).then(() => {
+            navigator.clipboard.writeText(excelText.trim()).then(function() {
                 showMessage('List copied to clipboard! You can paste it into Excel.', 'info');
-            }).catch(() => {
+            }).catch(function() {
                 // Fallback for older browsers
-                const textArea = document.createElement('textarea');
+                var textArea = document.createElement('textarea');
                 textArea.value = excelText.trim();
                 document.body.appendChild(textArea);
                 textArea.select();
@@ -1257,16 +1033,16 @@
         }
 
         // Show message
-        function showMessage(text, type = 'info') {
-            const container = document.getElementById('messagesContainer');
-            const message = document.createElement('div');
+        function showMessage(text, type) {
+            var container = document.getElementById('messagesContainer');
+            var message = document.createElement('div');
             message.className = type === 'error' ? 'error-message' : 'info-message';
             message.textContent = text;
             
             container.innerHTML = '';
             container.appendChild(message);
             
-            setTimeout(() => {
+            setTimeout(function() {
                 if (message.parentNode) {
                     message.parentNode.removeChild(message);
                 }
@@ -1275,9 +1051,9 @@
 
         // Update group size when changed
         document.getElementById('groupSize').addEventListener('change', function() {
-            const value = parseInt(this.value);
+            var value = parseInt(this.value);
             if (value < 1) this.value = 1;
         });
     </script>
 </body>
-</html>
+</html> 
