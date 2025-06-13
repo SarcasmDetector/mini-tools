@@ -714,35 +714,6 @@
                             populateExclusionPairsStep();
                         }
                 
-                        function skipStep2() {
-                            classData.excludedStudents = [];
-                            completeStep2();
-                        }
-                
-                        function completeStep2() {
-                            classData.exclusionCount = parseInt(document.getElementById('exclusionCount').value) || 4;
-                            
-                            // Update step 2 status
-                            var status = document.getElementById('step2Status');
-                            status.className = 'status-text success';
-                            if (classData.excludedStudents.length > 0) {
-                                status.innerHTML = '<span class="checkmark">✓</span> ' + classData.excludedStudents.length + ' students excluded from first ' + classData.exclusionCount + ' positions';
-                            } else {
-                                status.innerHTML = '<span class="checkmark">✓</span> No position exclusions set';
-                            }
-                            
-                            // Mark step 2 complete and activate step 3
-                            document.getElementById('step2').classList.remove('active');
-                            document.getElementById('step2').classList.add('completed');
-                            document.getElementById('step2').querySelector('.step-number').innerHTML = '✓';
-                            
-                            document.getElementById('step3').classList.remove('disabled');
-                            document.getElementById('step3').classList.add('active');
-                            
-                            // Populate step 3
-                            populateExclusionPairsStep();
-                        }
-                
                         function addExclusionPair() {
                             var student1 = document.getElementById('pairStudent1').value;
                             var student2 = document.getElementById('pairStudent2').value;
@@ -966,6 +937,8 @@
                             // Populate step 4
                             populateAbsentSelect();
                         }
+
+                        function populateAbsentSelect() {
                             var select = document.getElementById('absentSelect');
                             select.style.display = 'block';
                             select.innerHTML = '';
@@ -987,14 +960,19 @@
                             });
                         }
                 
-                        function updateAbsentSelection() {
-                            var checkboxes = document.querySelectorAll('#absentSelect input[type="checkbox"]');
-                            var selectedStudents = [];
-                            
-                            checkboxes.forEach(function(checkbox, index) {
-                                var item = checkbox.closest('.select-item');
-                                if (checkbox.checked) {
-                                    selectedStudents.push(classData.allStudents[index]);
+        function updateAbsentSelection() {
+            var checkboxes = document.querySelectorAll('#absentSelect input[type="checkbox"]');
+            var selectedStudents = [];
+            
+            checkboxes.forEach(function(checkbox, index) {
+                var item = checkbox.closest('.select-item');
+                if (checkbox.checked) {
+                    selectedStudents.push(classData.allStudents[index]);
+                    item.classList.add('selected');
+                } else {
+                    item.classList.remove('selected');
+                }
+            });
             
             classData.absentStudents = selectedStudents;
             
