@@ -1,15 +1,446 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>My Utility Tools</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🧰 ToolBox - Professional Utilities</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 60px;
+            padding: 40px 0;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .brand-icon {
+            font-size: 3.5rem;
+            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.2));
+        }
+
+        .brand-text {
+            font-size: 3rem;
+            font-weight: 700;
+            text-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+        .tagline {
+            font-size: 1.3rem;
+            opacity: 0.9;
+            font-weight: 300;
+            margin-bottom: 30px;
+        }
+
+        .intro {
+            max-width: 600px;
+            margin: 0 auto;
+            font-size: 1.1rem;
+            opacity: 0.95;
+            background: rgba(255,255,255,0.1);
+            padding: 20px 30px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        /* Categories */
+        .category-section {
+            margin-bottom: 50px;
+        }
+
+        .category-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: white;
+            font-size: 1.4rem;
+            font-weight: 600;
+            margin-bottom: 25px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .category-icon {
+            font-size: 1.8rem;
+        }
+
+        /* Tool Grid */
+        .tools-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+
+        /* Tool Cards */
+        .tool-card {
+            background: white;
+            border-radius: 20px;
+            padding: 35px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+            transition: all 0.4s ease;
+            border: 1px solid rgba(255,255,255,0.2);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .tool-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .tool-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 25px 50px rgba(0,0,0,0.25);
+        }
+
+        .tool-card:hover::before {
+            opacity: 1;
+        }
+
+        .tool-icon {
+            font-size: 3.5rem;
+            text-align: center;
+            margin-bottom: 20px;
+            height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .tool-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 12px;
+            text-align: center;
+        }
+
+        .tool-description {
+            color: #666;
+            font-size: 1rem;
+            margin-bottom: 20px;
+            text-align: center;
+            line-height: 1.5;
+        }
+
+        .tool-features {
+            list-style: none;
+            margin-bottom: 25px;
+        }
+
+        .tool-features li {
+            color: #555;
+            font-size: 0.9rem;
+            padding: 6px 0;
+            padding-left: 20px;
+            position: relative;
+        }
+
+        .tool-features li::before {
+            content: '✓';
+            position: absolute;
+            left: 0;
+            color: #28a745;
+            font-weight: bold;
+            font-size: 1rem;
+        }
+
+        .tool-button {
+            width: 100%;
+            padding: 15px 25px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: block;
+            text-align: center;
+        }
+
+        .tool-button:hover {
+            background: linear-gradient(135deg, #5a6fd8, #6a4190);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        /* Single tool grid for lone tools */
+        .single-tool-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            max-width: 400px;
+            margin: 0 auto;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            color: white;
+            padding: 40px 0;
+            margin-top: 60px;
+            border-top: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .footer-content {
+            font-size: 0.95rem;
+            opacity: 0.8;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+
+            .brand {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .brand-icon {
+                font-size: 2.5rem;
+            }
+
+            .brand-text {
+                font-size: 2.2rem;
+            }
+
+            .tagline {
+                font-size: 1.1rem;
+            }
+
+            .intro {
+                padding: 15px 20px;
+                font-size: 1rem;
+            }
+
+            .tools-grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+
+            .tool-card {
+                padding: 25px;
+            }
+
+            .tool-icon {
+                font-size: 2.8rem;
+                height: 60px;
+            }
+
+            .tool-title {
+                font-size: 1.3rem;
+            }
+
+            .category-header {
+                font-size: 1.2rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .header {
+                margin-bottom: 40px;
+                padding: 20px 0;
+            }
+
+            .brand-text {
+                font-size: 1.8rem;
+            }
+
+            .brand-icon {
+                font-size: 2rem;
+            }
+
+            .tool-card {
+                padding: 20px;
+            }
+        }
+
+        /* Animation for loading */
+        .tool-card {
+            opacity: 0;
+            animation: fadeInUp 0.6s ease forwards;
+        }
+
+        .tool-card:nth-child(1) { animation-delay: 0.1s; }
+        .tool-card:nth-child(2) { animation-delay: 0.2s; }
+        .tool-card:nth-child(3) { animation-delay: 0.3s; }
+        .tool-card:nth-child(4) { animation-delay: 0.4s; }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Subtle background pattern */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                radial-gradient(circle at 25% 25%, rgba(255,255,255,0.1) 2px, transparent 2px),
+                radial-gradient(circle at 75% 75%, rgba(255,255,255,0.1) 2px, transparent 2px);
+            background-size: 60px 60px;
+            pointer-events: none;
+            z-index: -1;
+        }
+    </style>
 </head>
 <body>
-    <h1>Utility Tools</h1>
-    <ul>
-        <li><a href="tool1-pdf-diff/">PDF Difference Finder</a></li>
-        <li><a href="tool2-list-randomizer/">List Randomizer</a></li>
-        <li><a href="tool3-grade-consolidator/">Grade Consolidator</a></li>
-        <li><a href="tool4-qr-generator/">QR Code Generator</a></li>
-    </ul>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="brand">
+                <div class="brand-icon">🧰</div>
+                <div class="brand-text">ToolBox</div>
+            </div>
+            <div class="tagline">Professional utilities at your fingertips</div>
+            <div class="intro">
+                A curated collection of powerful web-based tools designed to streamline your workflow. 
+                From document comparison to data consolidation, each tool is built for efficiency and ease of use.
+            </div>
+        </header>
+
+        <!-- Document Tools -->
+        <section class="category-section">
+            <div class="category-header">
+                <span class="category-icon">📄</span>
+                <span>Document Tools</span>
+            </div>
+            <div class="tools-grid single-tool-grid">
+                <div class="tool-card">
+                    <div class="tool-icon">📄</div>
+                    <div class="tool-title">PDF Difference Finder</div>
+                    <div class="tool-description">
+                        Compare documents and find changes with smart OCR error detection and fuzzy matching capabilities.
+                    </div>
+                    <ul class="tool-features">
+                        <li>Advanced text extraction from PDFs</li>
+                        <li>Smart OCR error detection</li>
+                        <li>Side-by-side difference highlighting</li>
+                        <li>Comprehensive comparison statistics</li>
+                    </ul>
+                    <a href="tool1-pdf-diff/" class="tool-button">Launch Tool</a>
+                </div>
+            </div>
+        </section>
+
+        <!-- Organization Tools -->
+        <section class="category-section">
+            <div class="category-header">
+                <span class="category-icon">🎲</span>
+                <span>Organization Tools</span>
+            </div>
+            <div class="tools-grid">
+                <div class="tool-card">
+                    <div class="tool-icon">🎲</div>
+                    <div class="tool-title">List Randomizer</div>
+                    <div class="tool-description">
+                        Create fair groups with smart constraints, exclusion rules, and flexible absent student handling.
+                    </div>
+                    <ul class="tool-features">
+                        <li>Position exclusion constraints</li>
+                        <li>Student pair exclusions</li>
+                        <li>Flexible absent student placement</li>
+                        <li>Excel-ready output format</li>
+                    </ul>
+                    <a href="tool2-list-randomizer/" class="tool-button">Launch Tool</a>
+                </div>
+
+                <div class="tool-card">
+                    <div class="tool-icon">📊</div>
+                    <div class="tool-title">Grade Consolidator</div>
+                    <div class="tool-description">
+                        Merge multiple teacher files into master stacking sheets with intelligent column mapping.
+                    </div>
+                    <ul class="tool-features">
+                        <li>Multi-file Excel processing</li>
+                        <li>Automatic column detection</li>
+                        <li>Grade and attendance merging</li>
+                        <li>Professional summary reports</li>
+                    </ul>
+                    <a href="tool3-grade-consolidator/" class="tool-button">Launch Tool</a>
+                </div>
+            </div>
+        </section>
+
+        <!-- Generation Tools -->
+        <section class="category-section">
+            <div class="category-header">
+                <span class="category-icon">🎯</span>
+                <span>Generation Tools</span>
+            </div>
+            <div class="tools-grid single-tool-grid">
+                <div class="tool-card">
+                    <div class="tool-icon">🎯</div>
+                    <div class="tool-title">QR Code Generator</div>
+                    <div class="tool-description">
+                        Create professional QR codes with batch processing capabilities and multiple export formats.
+                    </div>
+                    <ul class="tool-features">
+                        <li>Multiple content types (URL, WiFi, vCard)</li>
+                        <li>Batch CSV processing</li>
+                        <li>Customizable colors and sizes</li>
+                        <li>Print-ready output formats</li>
+                    </ul>
+                    <a href="tool4-qr-generator/" class="tool-button">Launch Tool</a>
+                </div>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <div class="footer-content">
+                ToolBox &copy; 2025 - Built for efficiency, designed for professionals
+            </div>
+        </footer>
+    </div>
 </body>
 </html>
