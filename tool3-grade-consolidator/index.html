@@ -1,0 +1,1035 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grade & Attendance Consolidator</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #28a745, #20c997);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .workflow-container {
+            padding: 40px;
+        }
+
+        .step {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 25px;
+            border-left: 5px solid #ddd;
+            transition: all 0.3s ease;
+        }
+
+        .step.active {
+            border-left-color: #28a745;
+            background: #f8fff8;
+            box-shadow: 0 5px 15px rgba(40, 167, 69, 0.2);
+        }
+
+        .step.completed {
+            border-left-color: #20c997;
+            background: #f0fdfa;
+        }
+
+        .step.disabled {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+
+        .step-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .step-number {
+            background: #ddd;
+            color: #666;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.2rem;
+            transition: all 0.3s ease;
+        }
+
+        .step.active .step-number {
+            background: #28a745;
+            color: white;
+        }
+
+        .step.completed .step-number {
+            background: #20c997;
+            color: white;
+        }
+
+        .step-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .step-description {
+            color: #666;
+            font-size: 0.95rem;
+            margin-top: 5px;
+        }
+
+        .upload-area {
+            border: 3px dashed #ddd;
+            border-radius: 15px;
+            padding: 40px;
+            text-align: center;
+            background: #fafafa;
+            transition: all 0.3s ease;
+            margin: 20px 0;
+        }
+
+        .upload-area.dragover {
+            border-color: #28a745;
+            background: #f8fff8;
+        }
+
+        .upload-area.has-files {
+            border-color: #20c997;
+            background: #f0fdfa;
+        }
+
+        .upload-icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            color: #28a745;
+        }
+
+        .upload-text {
+            font-size: 1.1rem;
+            color: #555;
+            margin-bottom: 15px;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .upload-btn {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .upload-btn:hover {
+            background: #218838;
+            transform: translateY(-1px);
+        }
+
+        .file-list {
+            margin-top: 20px;
+            max-height: 200px;
+            overflow-y: auto;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
+        }
+
+        .file-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 15px;
+            border-bottom: 1px solid #f1f3f4;
+        }
+
+        .file-item:last-child {
+            border-bottom: none;
+        }
+
+        .file-name {
+            font-size: 0.9rem;
+            color: #333;
+            flex: 1;
+        }
+
+        .file-type {
+            background: #e3f2fd;
+            color: #1976d2;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            margin: 0 10px;
+        }
+
+        .file-type.grades {
+            background: #e8f5e8;
+            color: #2d5a2d;
+        }
+
+        .file-type.attendance {
+            background: #fff3e0;
+            color: #f57c00;
+        }
+
+        .remove-btn {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 4px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.75rem;
+        }
+
+        .remove-btn:hover {
+            background: #c82333;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background: #f1f3f4;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 20px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #28a745, #20c997);
+            transition: width 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .action-btn {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 1.1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: block;
+            margin: 30px auto 0;
+        }
+
+        .action-btn:hover:not(:disabled) {
+            background: #218838;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(40, 167, 69, 0.3);
+        }
+
+        .action-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .results-section {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 30px;
+            margin-top: 30px;
+            display: none;
+        }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .summary-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .summary-number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #28a745;
+        }
+
+        .summary-label {
+            color: #666;
+            font-size: 0.9rem;
+            margin-top: 5px;
+        }
+
+        .download-btn {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            margin: 10px;
+        }
+
+        .download-btn:hover {
+            background: #0056b3;
+            transform: translateY(-1px);
+        }
+
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            border: 1px solid #f5c6cb;
+        }
+
+        .success-message {
+            background: #d4edda;
+            color: #155724;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            border: 1px solid #c3e6cb;
+        }
+
+        .mapping-section {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            border: 1px solid #dee2e6;
+        }
+
+        .mapping-header {
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .column-mapping {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .mapping-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .mapping-select {
+            flex: 1;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+
+        @media (max-width: 768px) {
+            .workflow-container {
+                padding: 20px;
+            }
+            
+            .step {
+                padding: 20px;
+            }
+            
+            .upload-area {
+                padding: 30px 20px;
+            }
+            
+            .column-mapping {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📊 Grade & Attendance Consolidator</h1>
+            <p>Upload all teacher files and automatically generate your master stacking sheet</p>
+        </div>
+
+        <div class="workflow-container">
+            <!-- Step 1: Upload Files -->
+            <div class="step active" id="step1">
+                <div class="step-header">
+                    <div class="step-number">1</div>
+                    <div>
+                        <div class="step-title">Upload Teacher Files</div>
+                        <div class="step-description">Upload all grade sheets and attendance sheets from teachers (supports multiple Excel files)</div>
+                    </div>
+                </div>
+                
+                <div class="upload-area" id="uploadArea">
+                    <div class="upload-icon">📁</div>
+                    <div class="upload-text">Drag and drop Excel files here, or click to browse</div>
+                    <button class="upload-btn" onclick="document.getElementById('fileInput').click()">
+                        Choose Files
+                    </button>
+                    <input type="file" id="fileInput" class="file-input" multiple accept=".xlsx,.xls" onchange="handleFileSelect(event)">
+                </div>
+
+                <div class="file-list" id="fileList" style="display: none;"></div>
+                
+                <button class="action-btn" id="analyzeBtn" onclick="analyzeFiles()" disabled>
+                    Analyze Files & Setup Mapping
+                </button>
+            </div>
+
+            <!-- Step 2: Column Mapping -->
+            <div class="step disabled" id="step2">
+                <div class="step-header">
+                    <div class="step-number">2</div>
+                    <div>
+                        <div class="step-title">Configure Column Mapping</div>
+                        <div class="step-description">Map columns from teacher files to your stacking sheet format</div>
+                    </div>
+                </div>
+                
+                <div id="mappingContainer"></div>
+                
+                <button class="action-btn" id="processBtn" onclick="processFiles()" disabled>
+                    Process & Consolidate Data
+                </button>
+            </div>
+
+            <!-- Step 3: Processing -->
+            <div class="step disabled" id="step3">
+                <div class="step-header">
+                    <div class="step-number">3</div>
+                    <div>
+                        <div class="step-title">Processing Data</div>
+                        <div class="step-description">Consolidating all files into master stacking sheet format</div>
+                    </div>
+                </div>
+                
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressBar" style="width: 0%;">0%</div>
+                </div>
+                
+                <div id="processingStatus"></div>
+            </div>
+        </div>
+
+        <div class="results-section" id="resultsSection">
+            <h2 style="margin-bottom: 20px; color: #333;">✅ Consolidation Complete!</h2>
+            
+            <div class="summary-grid" id="summaryGrid"></div>
+            
+            <div style="text-align: center; margin-top: 30px;">
+                <button class="download-btn" id="downloadBtn" onclick="downloadStackingSheet()">
+                    📥 Download Master Stacking Sheet
+                </button>
+                <button class="download-btn" onclick="downloadSummaryReport()">
+                    📋 Download Summary Report
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let uploadedFiles = [];
+        let analyzedData = {};
+        let consolidatedData = null;
+        
+        // File handling
+        function setupFileUpload() {
+            const uploadArea = document.getElementById('uploadArea');
+            const fileInput = document.getElementById('fileInput');
+            
+            uploadArea.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                uploadArea.classList.add('dragover');
+            });
+            
+            uploadArea.addEventListener('dragleave', () => {
+                uploadArea.classList.remove('dragover');
+            });
+            
+            uploadArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                uploadArea.classList.remove('dragover');
+                const files = Array.from(e.dataTransfer.files).filter(file => 
+                    file.name.endsWith('.xlsx') || file.name.endsWith('.xls')
+                );
+                addFiles(files);
+            });
+        }
+
+        function handleFileSelect(event) {
+            const files = Array.from(event.target.files);
+            addFiles(files);
+        }
+
+        function addFiles(files) {
+            files.forEach(file => {
+                if (!uploadedFiles.find(f => f.name === file.name)) {
+                    uploadedFiles.push(file);
+                }
+            });
+            updateFileList();
+        }
+
+        function updateFileList() {
+            const fileList = document.getElementById('fileList');
+            const uploadArea = document.getElementById('uploadArea');
+            const analyzeBtn = document.getElementById('analyzeBtn');
+            
+            if (uploadedFiles.length === 0) {
+                fileList.style.display = 'none';
+                uploadArea.classList.remove('has-files');
+                analyzeBtn.disabled = true;
+                return;
+            }
+            
+            fileList.style.display = 'block';
+            uploadArea.classList.add('has-files');
+            analyzeBtn.disabled = false;
+            
+            fileList.innerHTML = uploadedFiles.map((file, index) => {
+                const fileType = detectFileType(file.name);
+                return `
+                    <div class="file-item">
+                        <span class="file-name">${file.name}</span>
+                        <span class="file-type ${fileType.toLowerCase()}">${fileType}</span>
+                        <button class="remove-btn" onclick="removeFile(${index})">Remove</button>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function detectFileType(filename) {
+            const lower = filename.toLowerCase();
+            if (lower.includes('grade') || lower.includes('marks') || lower.includes('score')) {
+                return 'Grades';
+            } else if (lower.includes('attendance') || lower.includes('absent')) {
+                return 'Attendance';
+            }
+            return 'Unknown';
+        }
+
+        function removeFile(index) {
+            uploadedFiles.splice(index, 1);
+            updateFileList();
+        }
+
+        // File analysis
+        async function analyzeFiles() {
+            const analyzeBtn = document.getElementById('analyzeBtn');
+            analyzeBtn.disabled = true;
+            analyzeBtn.textContent = 'Analyzing Files...';
+            
+            try {
+                analyzedData = {
+                    gradeFiles: [],
+                    attendanceFiles: [],
+                    commonColumns: new Set(),
+                    studentColumns: new Set(),
+                    allColumns: new Map()
+                };
+
+                for (let file of uploadedFiles) {
+                    const workbook = await readExcelFile(file);
+                    const sheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[sheetName];
+                    const data = XLSX.utils.sheet_to_json(worksheet, { header: 1, range: 0 });
+                    
+                    if (data.length === 0) continue;
+                    
+                    const headers = data[0].filter(h => h && h.trim());
+                    const fileType = detectFileType(file.name);
+                    
+                    const fileData = {
+                        file: file,
+                        name: file.name,
+                        type: fileType,
+                        headers: headers,
+                        data: data,
+                        studentCount: data.length - 1
+                    };
+                    
+                    if (fileType === 'Grades') {
+                        analyzedData.gradeFiles.push(fileData);
+                    } else if (fileType === 'Attendance') {
+                        analyzedData.attendanceFiles.push(fileData);
+                    }
+                    
+                    // Track all columns
+                    headers.forEach(header => {
+                        analyzedData.allColumns.set(header, (analyzedData.allColumns.get(header) || 0) + 1);
+                        
+                        // Detect student name/ID columns
+                        const headerLower = header.toLowerCase();
+                        if (headerLower.includes('name') || headerLower.includes('student') || headerLower.includes('id')) {
+                            analyzedData.studentColumns.add(header);
+                        }
+                    });
+                }
+                
+                // Find common columns across files
+                analyzedData.commonColumns = new Set(
+                    Array.from(analyzedData.allColumns.entries())
+                        .filter(([column, count]) => count >= Math.ceil(uploadedFiles.length / 2))
+                        .map(([column]) => column)
+                );
+                
+                showMessage(`Analysis complete! Found ${analyzedData.gradeFiles.length} grade files and ${analyzedData.attendanceFiles.length} attendance files.`, 'success');
+                
+                completeStep(1);
+                activateStep(2);
+                setupColumnMapping();
+                
+            } catch (error) {
+                showMessage(`Error analyzing files: ${error.message}`, 'error');
+            } finally {
+                analyzeBtn.disabled = false;
+                analyzeBtn.textContent = 'Analyze Files & Setup Mapping';
+            }
+        }
+
+        async function readExcelFile(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        const data = e.target.result;
+                        const workbook = XLSX.read(data, { type: 'binary' });
+                        resolve(workbook);
+                    } catch (error) {
+                        reject(error);
+                    }
+                };
+                reader.onerror = reject;
+                reader.readAsBinaryString(file);
+            });
+        }
+
+        // Column mapping setup
+        function setupColumnMapping() {
+            const container = document.getElementById('mappingContainer');
+            
+            // Standard stacking sheet columns based on your template
+            const stackingColumns = [
+                'Student #',
+                'Student Name',
+                'Class #', 
+                'Total Grade',
+                '# of Absences',
+                'Article 1A Summary',
+                'Article 1B Summary',
+                'ST1 Prep Sheet',
+                'Article 2A Summary',
+                'ST 1',
+                'Article 2B Summary'
+            ];
+            
+            let mappingHTML = `
+                <div class="mapping-section">
+                    <div class="mapping-header">🎯 Map Source Columns to Stacking Sheet Format</div>
+                    <p style="color: #666; margin-bottom: 20px;">
+                        For each stacking sheet column, select which column from your teacher files contains that data.
+                        Leave blank if not applicable.
+                    </p>
+            `;
+            
+            // Get all unique columns from all files
+            const allSourceColumns = Array.from(analyzedData.allColumns.keys()).sort();
+            
+            stackingColumns.forEach(stackingCol => {
+                mappingHTML += `
+                    <div class="column-mapping">
+                        <div class="mapping-item">
+                            <strong>${stackingCol}:</strong>
+                        </div>
+                        <div class="mapping-item">
+                            <select class="mapping-select" data-target="${stackingCol}">
+                                <option value="">-- Select Source Column --</option>
+                                ${allSourceColumns.map(col => 
+                                    `<option value="${col}" ${autoSelectColumn(stackingCol, col) ? 'selected' : ''}>${col}</option>`
+                                ).join('')}
+                            </select>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            mappingHTML += `
+                </div>
+                <div class="mapping-section">
+                    <div class="mapping-header">👥 Student Identification</div>
+                    <div class="column-mapping">
+                        <div class="mapping-item">
+                            <strong>Primary Student ID Column:</strong>
+                        </div>
+                        <div class="mapping-item">
+                            <select class="mapping-select" id="primaryStudentId">
+                                <option value="">-- Select Column --</option>
+                                ${Array.from(analyzedData.studentColumns).map(col => 
+                                    `<option value="${col}" ${col.toLowerCase().includes('name') ? 'selected' : ''}>${col}</option>`
+                                ).join('')}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            container.innerHTML = mappingHTML;
+            
+            // Enable process button
+            document.getElementById('processBtn').disabled = false;
+        }
+
+        function autoSelectColumn(stackingCol, sourceCol) {
+            const stackingLower = stackingCol.toLowerCase();
+            const sourceLower = sourceCol.toLowerCase();
+            
+            // Auto-matching logic
+            if (stackingLower.includes('student') && sourceLower.includes('student')) return true;
+            if (stackingLower.includes('name') && sourceLower.includes('name')) return true;
+            if (stackingLower.includes('grade') && sourceLower.includes('grade')) return true;
+            if (stackingLower.includes('absence') && sourceLower.includes('absence')) return true;
+            if (stackingLower.includes('class') && sourceLower.includes('class')) return true;
+            
+            return false;
+        }
+
+        // Data processing
+        async function processFiles() {
+            const processBtn = document.getElementById('processBtn');
+            processBtn.disabled = true;
+            processBtn.textContent = 'Processing...';
+            
+            completeStep(2);
+            activateStep(3);
+            
+            try {
+                // Get column mappings
+                const mappings = {};
+                document.querySelectorAll('.mapping-select').forEach(select => {
+                    const target = select.dataset.target;
+                    const source = select.value;
+                    if (target && source) {
+                        mappings[target] = source;
+                    }
+                });
+                
+                const primaryStudentId = document.getElementById('primaryStudentId').value;
+                if (!primaryStudentId) {
+                    throw new Error('Please select a primary student ID column');
+                }
+                
+                updateProgress(10, 'Initializing data consolidation...');
+                
+                // Process all files and consolidate data
+                const consolidatedStudents = new Map();
+                let processedFiles = 0;
+                
+                // Process grade files
+                for (let gradeFile of analyzedData.gradeFiles) {
+                    updateProgress(20 + (processedFiles / uploadedFiles.length) * 60, `Processing ${gradeFile.name}...`);
+                    
+                    const students = processGradeFile(gradeFile, mappings, primaryStudentId);
+                    
+                    students.forEach(student => {
+                        const studentId = student[primaryStudentId] || student['Student Name'];
+                        if (!consolidatedStudents.has(studentId)) {
+                            consolidatedStudents.set(studentId, {});
+                        }
+                        
+                        // Merge student data
+                        Object.assign(consolidatedStudents.get(studentId), student);
+                    });
+                    
+                    processedFiles++;
+                }
+                
+                // Process attendance files
+                for (let attendanceFile of analyzedData.attendanceFiles) {
+                    updateProgress(20 + (processedFiles / uploadedFiles.length) * 60, `Processing ${attendanceFile.name}...`);
+                    
+                    const attendanceData = processAttendanceFile(attendanceFile, primaryStudentId);
+                    
+                    attendanceData.forEach((absences, studentId) => {
+                        if (consolidatedStudents.has(studentId)) {
+                            consolidatedStudents.get(studentId)['# of Absences'] = absences;
+                        }
+                    });
+                    
+                    processedFiles++;
+                }
+                
+                updateProgress(90, 'Finalizing consolidated data...');
+                
+                // Convert to final format
+                consolidatedData = Array.from(consolidatedStudents.values());
+                
+                updateProgress(100, 'Processing complete!');
+                
+                // Show results
+                showResults();
+                
+            } catch (error) {
+                showMessage(`Error processing files: ${error.message}`, 'error');
+            } finally {
+                processBtn.disabled = false;
+                processBtn.textContent = 'Process & Consolidate Data';
+            }
+        }
+
+        function processGradeFile(gradeFile, mappings, primaryStudentId) {
+            const data = gradeFile.data;
+            const headers = data[0];
+            const students = [];
+            
+            for (let i = 1; i < data.length; i++) {
+                const row = data[i];
+                const student = {};
+                
+                // Map columns according to mappings
+                headers.forEach((header, index) => {
+                    const value = row[index];
+                    if (value !== undefined && value !== null && value !== '') {
+                        
+                        // Check if this column is mapped to a stacking column
+                        const stackingColumn = Object.keys(mappings).find(key => mappings[key] === header);
+                        if (stackingColumn) {
+                            student[stackingColumn] = value;
+                        }
+                        
+                        // Always include the original column
+                        student[header] = value;
+                    }
+                });
+                
+                if (student[primaryStudentId]) {
+                    students.push(student);
+                }
+            }
+            
+            return students;
+        }
+
+        function processAttendanceFile(attendanceFile, primaryStudentId) {
+            const data = attendanceFile.data;
+            const headers = data[0];
+            const attendanceMap = new Map();
+            
+            for (let i = 1; i < data.length; i++) {
+                const row = data[i];
+                let studentId = null;
+                let absenceCount = 0;
+                
+                headers.forEach((header, index) => {
+                    const value = row[index];
+                    
+                    if (header === primaryStudentId) {
+                        studentId = value;
+                    } else if (value && (value.toString().toLowerCase().includes('absent') || value.toString() === 'A')) {
+                        absenceCount++;
+                    }
+                });
+                
+                if (studentId) {
+                    attendanceMap.set(studentId, absenceCount);
+                }
+            }
+            
+            return attendanceMap;
+        }
+
+        function updateProgress(percentage, status) {
+            const progressBar = document.getElementById('progressBar');
+            const processingStatus = document.getElementById('processingStatus');
+            
+            progressBar.style.width = percentage + '%';
+            progressBar.textContent = Math.round(percentage) + '%';
+            
+            if (status) {
+                processingStatus.innerHTML = `<div class="success-message">${status}</div>`;
+            }
+        }
+
+        // Results display
+        function showResults() {
+            completeStep(3);
+            
+            const resultsSection = document.getElementById('resultsSection');
+            const summaryGrid = document.getElementById('summaryGrid');
+            
+            const totalStudents = consolidatedData.length;
+            const gradeFiles = analyzedData.gradeFiles.length;
+            const attendanceFiles = analyzedData.attendanceFiles.length;
+            const studentsWithGrades = consolidatedData.filter(s => s['Total Grade']).length;
+            const studentsWithAttendance = consolidatedData.filter(s => s['# of Absences'] !== undefined).length;
+            
+            summaryGrid.innerHTML = `
+                <div class="summary-card">
+                    <div class="summary-number">${totalStudents}</div>
+                    <div class="summary-label">Total Students</div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-number">${gradeFiles}</div>
+                    <div class="summary-label">Grade Files</div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-number">${attendanceFiles}</div>
+                    <div class="summary-label">Attendance Files</div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-number">${studentsWithGrades}</div>
+                    <div class="summary-label">With Grades</div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-number">${studentsWithAttendance}</div>
+                    <div class="summary-label">With Attendance</div>
+                </div>
+            `;
+            
+            resultsSection.style.display = 'block';
+            resultsSection.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Download functions
+        function downloadStackingSheet() {
+            try {
+                const wb = XLSX.utils.book_new();
+                const ws = XLSX.utils.json_to_sheet(consolidatedData);
+                
+                XLSX.utils.book_append_sheet(wb, ws, "Consolidated Grades");
+                
+                const filename = `Stacking_Sheet_${new Date().toISOString().split('T')[0]}.xlsx`;
+                XLSX.writeFile(wb, filename);
+                
+                showMessage('Stacking sheet downloaded successfully!', 'success');
+            } catch (error) {
+                showMessage(`Error downloading file: ${error.message}`, 'error');
+            }
+        }
+
+        function downloadSummaryReport() {
+            try {
+                const reportData = [
+                    ['Consolidation Summary Report'],
+                    ['Generated:', new Date().toLocaleString()],
+                    [''],
+                    ['Files Processed:'],
+                    ...analyzedData.gradeFiles.map(f => ['Grade File:', f.name]),
+                    ...analyzedData.attendanceFiles.map(f => ['Attendance File:', f.name]),
+                    [''],
+                    ['Statistics:'],
+                    ['Total Students:', consolidatedData.length],
+                    ['Students with Grades:', consolidatedData.filter(s => s['Total Grade']).length],
+                    ['Students with Attendance:', consolidatedData.filter(s => s['# of Absences'] !== undefined).length]
+                ];
+                
+                const wb = XLSX.utils.book_new();
+                const ws = XLSX.utils.aoa_to_sheet(reportData);
+                
+                XLSX.utils.book_append_sheet(wb, ws, "Summary Report");
+                
+                const filename = `Consolidation_Report_${new Date().toISOString().split('T')[0]}.xlsx`;
+                XLSX.writeFile(wb, filename);
+                
+                showMessage('Summary report downloaded successfully!', 'success');
+            } catch (error) {
+                showMessage(`Error downloading report: ${error.message}`, 'error');
+            }
+        }
+
+        // UI Helper functions
+        function completeStep(stepNumber) {
+            const step = document.getElementById(`step${stepNumber}`);
+            step.classList.remove('active');
+            step.classList.add('completed');
+            step.querySelector('.step-number').textContent = '✓';
+        }
+
+        function activateStep(stepNumber) {
+            const step = document.getElementById(`step${stepNumber}`);
+            step.classList.remove('disabled');
+            step.classList.add('active');
+        }
+
+        function showMessage(text, type) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = type === 'error' ? 'error-message' : 'success-message';
+            messageDiv.textContent = text;
+            
+            const container = document.querySelector('.workflow-container');
+            container.insertBefore(messageDiv, container.firstChild);
+            
+            setTimeout(() => {
+                if (messageDiv.parentNode) {
+                    messageDiv.parentNode.removeChild(messageDiv);
+                }
+            }, 5000);
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            setupFileUpload();
+        });
+    </script>
+</body>
+</html>
