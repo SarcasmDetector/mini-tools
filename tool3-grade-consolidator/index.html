@@ -410,13 +410,40 @@
         </div>
 
         <div class="workflow-container">
-            <!-- Step 1: Upload Files -->
+            <!-- Step 1: Upload Stacking Sheet Template -->
             <div class="step active" id="step1">
                 <div class="step-header">
                     <div class="step-number">1</div>
                     <div>
+                        <div class="step-title">Upload Your Stacking Sheet Template</div>
+                        <div class="step-description">Upload your master stacking sheet to detect which columns need to be populated</div>
+                    </div>
+                </div>
+                
+                <div class="upload-area" id="stackingUploadArea">
+                    <div class="upload-icon">📋</div>
+                    <div class="upload-text">Drop your stacking sheet template here, or click to browse</div>
+                    <button class="upload-btn" onclick="document.getElementById('stackingInput').click()">
+                        Choose Stacking Sheet
+                    </button>
+                    <input type="file" id="stackingInput" class="file-input" accept=".xlsx,.xls" onchange="handleStackingUpload(event)">
+                </div>
+
+                <div id="stackingInfo" style="display: none;"></div>
+                <div id="columnSelector" style="display: none;"></div>
+                
+                <button class="action-btn" id="confirmColumnsBtn" onclick="confirmColumns()" disabled>
+                    Confirm Column Selection
+                </button>
+            </div>
+
+            <!-- Step 2: Upload Teacher Files -->
+            <div class="step disabled" id="step2">
+                <div class="step-header">
+                    <div class="step-number">2</div>
+                    <div>
                         <div class="step-title">Upload Teacher Files</div>
-                        <div class="step-description">Upload all grade sheets and attendance sheets from teachers (supports multiple Excel files)</div>
+                        <div class="step-description">Upload all grade sheets and attendance sheets from teachers</div>
                     </div>
                 </div>
                 
@@ -436,13 +463,13 @@
                 </button>
             </div>
 
-            <!-- Step 2: Column Mapping -->
-            <div class="step disabled" id="step2">
+            <!-- Step 3: Column Mapping -->
+            <div class="step disabled" id="step3">
                 <div class="step-header">
-                    <div class="step-number">2</div>
+                    <div class="step-number">3</div>
                     <div>
                         <div class="step-title">Configure Column Mapping</div>
-                        <div class="step-description">Map columns from teacher files to your stacking sheet format</div>
+                        <div class="step-description">Map columns from teacher files to your selected stacking sheet columns</div>
                     </div>
                 </div>
                 
@@ -453,10 +480,10 @@
                 </button>
             </div>
 
-            <!-- Step 3: Processing -->
-            <div class="step disabled" id="step3">
+            <!-- Step 4: Processing -->
+            <div class="step disabled" id="step4">
                 <div class="step-header">
-                    <div class="step-number">3</div>
+                    <div class="step-number">4</div>
                     <div>
                         <div class="step-title">Processing Data</div>
                         <div class="step-description">Consolidating all files into master stacking sheet format</div>
@@ -492,6 +519,117 @@
         let uploadedFiles = [];
         let analyzedData = {};
         let consolidatedData = null;
+        let stackingSheetColumns = [];
+        let selectedColumns = [];
+        
+        // Stacking sheet upload and column selection
+        function handleStackingUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            const stackingArea = document.getElementById('stackingUploadArea');
+            stackingArea.classList.add('has-files');
+            
+            // Process the stacking sheet
+            readExcelFile(file).then(workbook => {
+                const sheetName = workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[sheetName];
+                const data = XLSX.utils.sheet_to_json(worksheet, { header: 1, range: 0 });
+                
+                if (data.length > 0) {
+                    const headers = data[0].filter(h => h && h.trim());
+                    stackingSheetColumns = headers;
+                    
+                    // Show file info
+                    const stackingInfo = document.getElementById('stackingInfo');
+                    stackingInfo.style.display = 'block';
+                    stackingInfo.innerHTML = `
+                        <div class="success-message">
+                            ✅ Stacking sheet loaded: ${file.name}<br>
+                            Found ${headers.length} columns. Please select which columns need data from teacher files:
+                        </div>
+                    `;
+                    
+                    // Show column selector
+                    showColumnSelector(headers);
+                }
+            }).catch(error => {
+                showMessage(`Error reading stacking sheet: ${error.message}`, 'error');
+            });
+        }
+
+        function showColumnSelector(columns) {
+            const selector = document.getElementById('columnSelector');
+            selector.style.display = 'block';
+            
+            // Pre-select common columns based on your example
+            const defaultColumns = [
+                'Student #', 'Student Name', 'Class #', 'Total Grade', '# of Absences',
+                'Article 1A Summary', 'Article 1B Summary', 'ST1 Prep Sheet', 
+                'Article 2A Summary', 'ST 1', 'Article 2B Summary', 'ST2 Prep Sheet',
+                'ST2 Mid-Term FC', 'Article 3A Summary', 'Article 3B Summary', 
+                'ST3 Prep Sheet', 'ST3 Final FC', 'Participation'
+            ];
+            
+            let selectorHTML = `
+                <div class="mapping-section">
+                    <div class="mapping-header">📋 Select Columns to Populate</div>
+                    <p style="color: #666; margin-bottom: 20px;">
+                        Check the columns that should be filled with data from teacher files. 
+                        Unchecked columns will remain unchanged in your stacking sheet.
+                    </p>
+                    <div style="max-height: 300px; overflow-y: auto; border: 1px solid #ddd; border-radius: 8px; padding: 15px;">
+            `;
+            
+            columns.forEach((col, index) => {
+                const isDefaultSelected = defaultColumns.some(defaultCol => 
+                    col.toLowerCase().includes(defaultCol.toLowerCase()) || 
+                    defaultCol.toLowerCase().includes(col.toLowerCase())
+                );
+                
+                selectorHTML += `
+                    <div style="margin: 8px 0; display: flex; align-items: center;">
+                        <input type="checkbox" id="col_${index}" value="${col}" 
+                               ${isDefaultSelected ? 'checked' : ''} 
+                               onchange="updateColumnSelection()" 
+                               style="margin-right: 10px; transform: scale(1.2);">
+                        <label for="col_${index}" style="cursor: pointer; flex: 1;">${col}</label>
+                    </div>
+                `;
+            });
+            
+            selectorHTML += `
+                    </div>
+                    <div style="margin-top: 15px; padding: 10px; background: #e3f2fd; border-radius: 6px;">
+                        <strong>💡 Tip:</strong> Typically you'll want Student info, grades, attendance, and assignment columns. 
+                        Leave formatting/calculation columns unchecked.
+                    </div>
+                </div>
+            `;
+            
+            selector.innerHTML = selectorHTML;
+            updateColumnSelection(); // Initial update
+        }
+
+        function updateColumnSelection() {
+            const checkboxes = document.querySelectorAll('#columnSelector input[type="checkbox"]:checked');
+            selectedColumns = Array.from(checkboxes).map(cb => cb.value);
+            
+            const confirmBtn = document.getElementById('confirmColumnsBtn');
+            confirmBtn.disabled = selectedColumns.length === 0;
+            
+            // Update button text with count
+            confirmBtn.textContent = `Confirm ${selectedColumns.length} Selected Columns`;
+        }
+
+        function confirmColumns() {
+            if (selectedColumns.length === 0) return;
+            
+            showMessage(`✅ Selected ${selectedColumns.length} columns for data population`, 'success');
+            
+            completeStep(1);
+            activateStep(2);
+        }
         
         // File handling
         function setupFileUpload() {
@@ -636,8 +774,8 @@
                 
                 showMessage(`Analysis complete! Found ${analyzedData.gradeFiles.length} grade files and ${analyzedData.attendanceFiles.length} attendance files.`, 'success');
                 
-                completeStep(1);
-                activateStep(2);
+                completeStep(2);
+                activateStep(3);
                 setupColumnMapping();
                 
             } catch (error) {
@@ -665,84 +803,31 @@
             });
         }
 
-        // Column mapping setup
+        // Column mapping setup - now uses selected columns from stacking sheet
         function setupColumnMapping() {
             const container = document.getElementById('mappingContainer');
             
-            // Complete stacking sheet columns based on your template
-            const stackingColumns = [
-                'Student #',
-                'Student Name',
-                'Class #', 
-                'Total Grade',
-                '# of Absences',
-                'Article 1A Summary',
-                'Article 1B Summary',
-                'ST1 Prep Sheet',
-                'Article 2A Summary',
-                'ST 1',
-                'Article 2B Summary',
-                'ST1 Reflection',
-                'Article 3A Summary',
-                'Article 3B Summary',
-                'ST2 Prep Sheet',
-                'Article 4A Summary',
-                'ST 2',
-                'Article 4B Summary',
-                'ST2 Reflection',
-                'Article 5A Summary',
-                'Article 5B Summary',
-                'ST3 Prep Sheet',
-                'Article 6A Summary',
-                'ST 3',
-                'Article 6B Summary',
-                'ST3 Reflection',
-                'Article 7A Summary',
-                'Article 7B Summary',
-                'ST4 Prep Sheet',
-                'Article 8A Summary',
-                'ST 4',
-                'Article 8B Summary',
-                'ST4 Reflection',
-                'Article 9A Summary',
-                'Article 9B Summary',
-                'ST5 Prep Sheet',
-                'Article 10A Summary',
-                'ST 5',
-                'Article 10B Summary',
-                'ST5 Reflection',
-                'Article 11A Summary',
-                'Article 11B Summary',
-                'ST6 Prep Sheet',
-                'Article 12A Summary',
-                'ST 6',
-                'Article 12B Summary',
-                'ST6 Reflection',
-                'Article 13A Summary',
-                'Article 13B Summary',
-                'ST7 Prep Sheet',
-                'Article 14A Summary',
-                'ST 7',
-                'Article 14B Summary',
-                'ST7 Reflection',
-                'Final Presentation'
-            ];
+            // Use the selected columns from the stacking sheet
+            const stackingColumns = selectedColumns;
             
             let mappingHTML = `
                 <div class="mapping-section">
                     <div class="mapping-header">🎯 Map Source Columns to Stacking Sheet Format</div>
                     <p style="color: #666; margin-bottom: 20px;">
-                        For each stacking sheet column, select which column from your teacher files contains that data.
+                        For each selected stacking sheet column, choose which column from your teacher files contains that data.
                         Leave blank if not applicable.
                     </p>
+                    <div style="background: #e8f5e8; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                        <strong>📊 Selected Columns:</strong> ${stackingColumns.length} columns will be populated from teacher files.
+                    </div>
             `;
             
-            // Get all unique columns from all files with smart normalization
+            // Get all unique columns from all files with improved normalization
             const allSourceColumns = normalizeAndDeduplicateColumns(Array.from(analyzedData.allColumns.keys()));
             
             stackingColumns.forEach(stackingCol => {
                 // Skip Class # since it comes from filename
-                if (stackingCol === 'Class #') {
+                if (stackingCol === 'Class #' || stackingCol.toLowerCase().includes('class')) {
                     mappingHTML += `
                         <div class="column-mapping">
                             <div class="mapping-item">
@@ -791,6 +876,12 @@
                             </select>
                         </div>
                     </div>
+                    <div style="background: #fff3cd; padding: 15px; border-radius: 8px; margin-top: 15px;">
+                        <strong>💡 Tips:</strong><br>
+                        • For absences: Look for "Total" column in attendance sheets<br>
+                        • For assignments: Columns are automatically grouped by type (e.g., all "Summary 1A" variations are shown as one option)<br>
+                        • Class numbers are extracted from filenames like "01 EC3_Seminar..."
+                    </div>
                 </div>
             `;
             
@@ -800,78 +891,137 @@
             document.getElementById('processBtn').disabled = false;
         }
 
-        // Smart column normalization to treat similar columns as the same
+        // Smart column normalization with improved pattern matching
         function normalizeColumnName(columnName) {
             if (!columnName) return '';
             
-            // Remove numbers/IDs at the beginning and normalize
-            let normalized = columnName
-                .replace(/^\d+\s*/, '') // Remove leading numbers
-                .replace(/^[A-Z]{2,3}\d+\s*/, '') // Remove course codes like EC3, etc.
-                .trim()
-                .toLowerCase();
+            let normalized = columnName.trim();
             
-            // Common substitutions for variations
-            const substitutions = {
-                'summary': 'summary',
-                'prep': 'prep sheet',
-                'preparation': 'prep sheet',
-                'st ': 'st ',
-                'student task': 'st',
-                'reflection': 'reflection',
-                'final': 'final',
-                'presentation': 'presentation'
-            };
+            // Remove various prefixes that appear in teacher files
+            normalized = normalized
+                .replace(/^\d+\s*[-_]?\s*/, '') // Remove leading numbers like "01 ", "1-", "23_"
+                .replace(/^[A-Z]{2,4}\d*\s*[-_]?\s*/i, '') // Remove course codes like "EC3", "ENG101"
+                .replace(/^(class|section)\s*\d*\s*[-_]?\s*/i, '') // Remove "Class 1", "Section A"
+                .replace(/^(spring|fall|winter|summer)\s*\d*\s*[-_]?\s*/i, '') // Remove semester info
+                .replace(/\s*\d{4}\s*/, '') // Remove years like "2025"
+                .replace(/\s*spring\s*/i, '') // Remove semester names
+                .replace(/\s*fall\s*/i, '')
+                .trim();
             
-            Object.keys(substitutions).forEach(key => {
-                normalized = normalized.replace(new RegExp(key, 'gi'), substitutions[key]);
+            // Normalize common assignment patterns
+            const patterns = [
+                // Article patterns: "Article 1A Summary" → "article 1a summary"
+                { from: /article\s*(\d+[a-z]?)\s*summary/i, to: 'article $1 summary' },
+                // ST patterns: "ST 1", "Student Task 1" → "st 1"
+                { from: /student\s*task\s*(\d+)/i, to: 'st $1' },
+                { from: /st\s*(\d+)/i, to: 'st $1' },
+                // Prep patterns: "Prep Sheet", "Preparation" → "prep sheet"
+                { from: /(prep|preparation)\s*(sheet)?/i, to: 'prep sheet' },
+                // Reflection patterns
+                { from: /reflection/i, to: 'reflection' },
+                // Final patterns
+                { from: /final\s*(presentation|project|exam)?/i, to: 'final presentation' },
+                // FC patterns: "Final Check", "FC" → "fc"
+                { from: /(final\s*check|fc)/i, to: 'fc' },
+                // Mid-term patterns
+                { from: /mid[\s-]*term/i, to: 'mid-term' },
+                // Total/Grade patterns
+                { from: /(total\s*grade|final\s*grade|grade\s*total)/i, to: 'total grade' },
+                // Attendance patterns
+                { from: /(absences?|absent)/i, to: 'absences' },
+                { from: /attendance/i, to: 'attendance' },
+                // Participation patterns
+                { from: /participation/i, to: 'participation' }
+            ];
+            
+            patterns.forEach(pattern => {
+                normalized = normalized.replace(pattern.from, pattern.to);
             });
             
-            return normalized;
+            return normalized.toLowerCase().trim();
         }
 
         function normalizeAndDeduplicateColumns(columns) {
             const normalizedMap = new Map();
+            const categoryCount = new Map();
             
             columns.forEach(col => {
                 const normalized = normalizeColumnName(col);
-                if (!normalizedMap.has(normalized)) {
-                    normalizedMap.set(normalized, col); // Keep the first occurrence as representative
+                if (normalized) {
+                    // Count occurrences of each normalized type
+                    categoryCount.set(normalized, (categoryCount.get(normalized) || 0) + 1);
+                    
+                    if (!normalizedMap.has(normalized)) {
+                        normalizedMap.set(normalized, col); // Keep first occurrence as representative
+                    }
                 }
             });
             
-            return Array.from(normalizedMap.values()).sort();
+            // Return unique normalized columns, sorted by frequency (most common first)
+            return Array.from(normalizedMap.entries())
+                .sort((a, b) => (categoryCount.get(b[0]) || 0) - (categoryCount.get(a[0]) || 0))
+                .map(([normalized, original]) => original);
         }
 
         function autoSelectColumn(stackingCol, sourceCol) {
             const stackingNorm = normalizeColumnName(stackingCol);
             const sourceNorm = normalizeColumnName(sourceCol);
             
-            // Enhanced matching logic
+            // Direct match
             if (stackingNorm === sourceNorm) return true;
             
-            // Specific matching patterns
-            if (stackingCol.includes('Article') && sourceCol.toLowerCase().includes('article')) {
-                // Match article patterns like "Article 1A Summary" with "1A Summary"
-                const stackingPattern = stackingCol.replace('Article ', '').toLowerCase();
-                const sourcePattern = sourceCol.replace(/^\d+\s*/, '').toLowerCase();
-                if (stackingPattern === sourcePattern) return true;
+            // Special case for "Total" column mapping to absences
+            if (stackingCol.toLowerCase().includes('absence') && sourceCol.toLowerCase() === 'total') {
+                return true;
             }
             
-            if (stackingCol.includes('ST ') && sourceCol.toLowerCase().includes('st')) {
-                // Match ST patterns
-                const stackingNum = stackingCol.match(/ST (\d+)/);
-                const sourceNum = sourceCol.match(/st.?(\d+)/i);
-                if (stackingNum && sourceNum && stackingNum[1] === sourceNum[1]) return true;
+            // Fuzzy matching for common patterns
+            const similarity = calculateStringSimilarity(stackingNorm, sourceNorm);
+            if (similarity > 0.8) return true; // 80% similarity threshold
+            
+            // Specific pattern matching
+            if (stackingCol.toLowerCase().includes('article') && sourceCol.toLowerCase().includes('article')) {
+                return true;
             }
             
-            // Basic partial matches
-            if (stackingCol.toLowerCase().includes('student') && sourceCol.toLowerCase().includes('student')) return true;
-            if (stackingCol.toLowerCase().includes('name') && sourceCol.toLowerCase().includes('name')) return true;
-            if (stackingCol.toLowerCase().includes('grade') && sourceCol.toLowerCase().includes('grade')) return true;
-            if (stackingCol.toLowerCase().includes('absence') && sourceCol.toLowerCase().includes('absence')) return true;
+            if (stackingCol.toLowerCase().includes('st ') && sourceCol.toLowerCase().includes('st')) {
+                return true;
+            }
             
             return false;
+        }
+
+        function calculateStringSimilarity(str1, str2) {
+            const longer = str1.length > str2.length ? str1 : str2;
+            const shorter = str1.length > str2.length ? str2 : str1;
+            
+            if (longer.length === 0) return 1.0;
+            
+            const editDistance = levenshteinDistance(longer, shorter);
+            return (longer.length - editDistance) / longer.length;
+        }
+
+        function levenshteinDistance(str1, str2) {
+            const matrix = Array(str2.length + 1).fill().map(() => Array(str1.length + 1).fill(0));
+            
+            for (let i = 0; i <= str1.length; i++) matrix[0][i] = i;
+            for (let j = 0; j <= str2.length; j++) matrix[j][0] = j;
+            
+            for (let j = 1; j <= str2.length; j++) {
+                for (let i = 1; i <= str1.length; i++) {
+                    if (str1[i - 1] === str2[j - 1]) {
+                        matrix[j][i] = matrix[j - 1][i - 1];
+                    } else {
+                        matrix[j][i] = Math.min(
+                            matrix[j - 1][i - 1] + 1,
+                            matrix[j][i - 1] + 1,
+                            matrix[j - 1][i] + 1
+                        );
+                    }
+                }
+            }
+            
+            return matrix[str2.length][str1.length];
         }
 
         // Data processing
@@ -880,8 +1030,8 @@
             processBtn.disabled = true;
             processBtn.textContent = 'Processing...';
             
-            completeStep(2);
-            activateStep(3);
+            completeStep(3);
+            activateStep(4);
             
             try {
                 // Get column mappings
@@ -1062,7 +1212,7 @@
 
         // Results display
         function showResults() {
-            completeStep(3);
+            completeStep(4);
             
             const resultsSection = document.getElementById('resultsSection');
             const summaryGrid = document.getElementById('summaryGrid');
