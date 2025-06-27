@@ -562,35 +562,59 @@
             const selector = document.getElementById('columnSelector');
             selector.style.display = 'block';
             
-            // Pre-select common columns based on your example
-            const defaultColumns = [
-                'Student #', 'Student Name', 'Class #', 'Total Grade', '# of Absences',
-                'Article 1A Summary', 'Article 1B Summary', 'ST1 Prep Sheet', 
-                'Article 2A Summary', 'ST 1', 'Article 2B Summary', 'ST2 Prep Sheet',
-                'ST2 Mid-Term FC', 'Article 3A Summary', 'Article 3B Summary', 
-                'ST3 Prep Sheet', 'ST3 Final FC', 'Participation'
-            ];
+            // Required columns that everyone must use (A-E, AF)
+            const requiredColumns = ['Student #', 'Student Name', 'Class #', 'Total Grade', '# of Absences', 'Annotations'];
+            
+            // Optional assignment columns (F-Y) - only show if they have content
+            const assignmentColumns = columns.filter(col => {
+                // Skip required columns and empty columns
+                if (requiredColumns.some(req => col.toLowerCase().includes(req.toLowerCase()))) {
+                    return false;
+                }
+                
+                // Only include columns F-Y range that might contain assignment data
+                const colLower = col.toLowerCase();
+                return colLower.includes('article') || 
+                       colLower.includes('st') || 
+                       colLower.includes('prep') || 
+                       colLower.includes('reflection') || 
+                       colLower.includes('final') || 
+                       colLower.includes('presentation') ||
+                       colLower.includes('participation') ||
+                       colLower.includes('summary') ||
+                       colLower.includes('fc') ||
+                       colLower.includes('mid-term');
+            });
             
             let selectorHTML = `
                 <div class="mapping-section">
-                    <div class="mapping-header">📋 Select Columns to Populate</div>
-                    <p style="color: #666; margin-bottom: 20px;">
-                        Check the columns that should be filled with data from teacher files. 
-                        Unchecked columns will remain unchanged in your stacking sheet.
-                    </p>
-                    <div style="max-height: 300px; overflow-y: auto; border: 1px solid #ddd; border-radius: 8px; padding: 15px;">
+                    <div class="mapping-header">📋 Column Selection</div>
+                    
+                    <!-- Required Columns -->
+                    <div style="background: #e8f5e8; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                        <h4 style="color: #2d5a2d; margin-bottom: 10px;">✅ Required Columns (Always Included)</h4>
+                        <p style="color: #2d5a2d; font-size: 0.9rem;">These columns are essential and will always be populated:</p>
+                        <div style="margin-top: 10px;">
+                            ${requiredColumns.filter(req => columns.some(col => col.toLowerCase().includes(req.toLowerCase()))).map(req => 
+                                `<span style="background: white; padding: 4px 8px; margin: 2px; border-radius: 4px; font-size: 0.85rem; display: inline-block;">${req}</span>`
+                            ).join('')}
+                        </div>
+                    </div>
+                    
+                    <!-- Optional Assignment Columns -->
+                    <div style="background: #fff3cd; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                        <h4 style="color: #856404; margin-bottom: 10px;">📝 Optional Assignment Columns</h4>
+                        <p style="color: #856404; font-size: 0.9rem; margin-bottom: 15px;">
+                            Select which assignment columns need data from teacher files. 
+                            Only select columns you're actually using for assignments.
+                        </p>
+                        <div style="max-height: 250px; overflow-y: auto; border: 1px solid #ddd; border-radius: 8px; padding: 15px; background: white;">
             `;
             
-            columns.forEach((col, index) => {
-                const isDefaultSelected = defaultColumns.some(defaultCol => 
-                    col.toLowerCase().includes(defaultCol.toLowerCase()) || 
-                    defaultCol.toLowerCase().includes(col.toLowerCase())
-                );
-                
+            assignmentColumns.forEach((col, index) => {
                 selectorHTML += `
                     <div style="margin: 8px 0; display: flex; align-items: center;">
                         <input type="checkbox" id="col_${index}" value="${col}" 
-                               ${isDefaultSelected ? 'checked' : ''} 
                                onchange="updateColumnSelection()" 
                                style="margin-right: 10px; transform: scale(1.2);">
                         <label for="col_${index}" style="cursor: pointer; flex: 1;">${col}</label>
@@ -599,27 +623,47 @@
             });
             
             selectorHTML += `
+                        </div>
                     </div>
-                    <div style="margin-top: 15px; padding: 10px; background: #e3f2fd; border-radius: 6px;">
-                        <strong>💡 Tip:</strong> Typically you'll want Student info, grades, attendance, and assignment columns. 
-                        Leave formatting/calculation columns unchecked.
+                    
+                    <div style="background: #e3f2fd; padding: 15px; border-radius: 8px;">
+                        <strong>💡 Tips:</strong><br>
+                        • Required columns (A-E, AF) are automatically included<br>
+                        • Only select assignment columns (F-Y) that you're actively using<br>
+                        • Empty/unused columns don't need to be selected
                     </div>
                 </div>
             `;
             
             selector.innerHTML = selectorHTML;
+            
+            // Pre-populate selectedColumns with required columns
+            selectedColumns = requiredColumns.filter(req => 
+                columns.some(col => col.toLowerCase().includes(req.toLowerCase()))
+            );
+            
             updateColumnSelection(); // Initial update
         }
 
         function updateColumnSelection() {
             const checkboxes = document.querySelectorAll('#columnSelector input[type="checkbox"]:checked');
-            selectedColumns = Array.from(checkboxes).map(cb => cb.value);
+            const additionalColumns = Array.from(checkboxes).map(cb => cb.value);
+            
+            // Always include required columns + any selected optional columns
+            const requiredColumns = ['Student #', 'Student Name', 'Class #', 'Total Grade', '# of Absences', 'Annotations'];
+            const availableRequired = requiredColumns.filter(req => 
+                stackingSheetColumns.some(col => col.toLowerCase().includes(req.toLowerCase()))
+            );
+            
+            selectedColumns = [...availableRequired, ...additionalColumns];
             
             const confirmBtn = document.getElementById('confirmColumnsBtn');
-            confirmBtn.disabled = selectedColumns.length === 0;
+            confirmBtn.disabled = false; // Always enabled since we have required columns
             
             // Update button text with count
-            confirmBtn.textContent = `Confirm ${selectedColumns.length} Selected Columns`;
+            const totalCount = selectedColumns.length;
+            const optionalCount = additionalColumns.length;
+            confirmBtn.textContent = `Confirm ${totalCount} Columns (${availableRequired.length} required + ${optionalCount} optional)`;
         }
 
         function confirmColumns() {
@@ -891,11 +935,19 @@
             document.getElementById('processBtn').disabled = false;
         }
 
-        // Smart column normalization with improved pattern matching
+        // Smart column normalization with improved pattern matching for report formats
         function normalizeColumnName(columnName) {
             if (!columnName) return '';
             
             let normalized = columnName.trim();
+            
+            // Handle the pattern: [report_XXXXXX_ Assignments ][Name of Assignment]
+            // Extract just the assignment name part
+            const reportPattern = /(?:report_\w+_\s*assignments?\s*[\[\]]*\s*)?(.+)/i;
+            const match = normalized.match(reportPattern);
+            if (match) {
+                normalized = match[1].trim();
+            }
             
             // Remove various prefixes that appear in teacher files
             normalized = normalized
@@ -906,6 +958,7 @@
                 .replace(/\s*\d{4}\s*/, '') // Remove years like "2025"
                 .replace(/\s*spring\s*/i, '') // Remove semester names
                 .replace(/\s*fall\s*/i, '')
+                .replace(/[\[\]]/g, '') // Remove any remaining brackets
                 .trim();
             
             // Normalize common assignment patterns
