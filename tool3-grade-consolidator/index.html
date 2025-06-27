@@ -669,7 +669,7 @@
         function setupColumnMapping() {
             const container = document.getElementById('mappingContainer');
             
-            // Standard stacking sheet columns based on your template
+            // Complete stacking sheet columns based on your template
             const stackingColumns = [
                 'Student #',
                 'Student Name',
@@ -681,7 +681,51 @@
                 'ST1 Prep Sheet',
                 'Article 2A Summary',
                 'ST 1',
-                'Article 2B Summary'
+                'Article 2B Summary',
+                'ST1 Reflection',
+                'Article 3A Summary',
+                'Article 3B Summary',
+                'ST2 Prep Sheet',
+                'Article 4A Summary',
+                'ST 2',
+                'Article 4B Summary',
+                'ST2 Reflection',
+                'Article 5A Summary',
+                'Article 5B Summary',
+                'ST3 Prep Sheet',
+                'Article 6A Summary',
+                'ST 3',
+                'Article 6B Summary',
+                'ST3 Reflection',
+                'Article 7A Summary',
+                'Article 7B Summary',
+                'ST4 Prep Sheet',
+                'Article 8A Summary',
+                'ST 4',
+                'Article 8B Summary',
+                'ST4 Reflection',
+                'Article 9A Summary',
+                'Article 9B Summary',
+                'ST5 Prep Sheet',
+                'Article 10A Summary',
+                'ST 5',
+                'Article 10B Summary',
+                'ST5 Reflection',
+                'Article 11A Summary',
+                'Article 11B Summary',
+                'ST6 Prep Sheet',
+                'Article 12A Summary',
+                'ST 6',
+                'Article 12B Summary',
+                'ST6 Reflection',
+                'Article 13A Summary',
+                'Article 13B Summary',
+                'ST7 Prep Sheet',
+                'Article 14A Summary',
+                'ST 7',
+                'Article 14B Summary',
+                'ST7 Reflection',
+                'Final Presentation'
             ];
             
             let mappingHTML = `
@@ -693,10 +737,26 @@
                     </p>
             `;
             
-            // Get all unique columns from all files
-            const allSourceColumns = Array.from(analyzedData.allColumns.keys()).sort();
+            // Get all unique columns from all files with smart normalization
+            const allSourceColumns = normalizeAndDeduplicateColumns(Array.from(analyzedData.allColumns.keys()));
             
             stackingColumns.forEach(stackingCol => {
+                // Skip Class # since it comes from filename
+                if (stackingCol === 'Class #') {
+                    mappingHTML += `
+                        <div class="column-mapping">
+                            <div class="mapping-item">
+                                <strong>${stackingCol}:</strong>
+                                <small style="color: #666;">(extracted from filename)</small>
+                            </div>
+                            <div class="mapping-item">
+                                <input type="text" class="mapping-select" value="Auto-detected from filename" disabled style="background: #f8f9fa;">
+                            </div>
+                        </div>
+                    `;
+                    return;
+                }
+                
                 mappingHTML += `
                     <div class="column-mapping">
                         <div class="mapping-item">
@@ -740,16 +800,76 @@
             document.getElementById('processBtn').disabled = false;
         }
 
-        function autoSelectColumn(stackingCol, sourceCol) {
-            const stackingLower = stackingCol.toLowerCase();
-            const sourceLower = sourceCol.toLowerCase();
+        // Smart column normalization to treat similar columns as the same
+        function normalizeColumnName(columnName) {
+            if (!columnName) return '';
             
-            // Auto-matching logic
-            if (stackingLower.includes('student') && sourceLower.includes('student')) return true;
-            if (stackingLower.includes('name') && sourceLower.includes('name')) return true;
-            if (stackingLower.includes('grade') && sourceLower.includes('grade')) return true;
-            if (stackingLower.includes('absence') && sourceLower.includes('absence')) return true;
-            if (stackingLower.includes('class') && sourceLower.includes('class')) return true;
+            // Remove numbers/IDs at the beginning and normalize
+            let normalized = columnName
+                .replace(/^\d+\s*/, '') // Remove leading numbers
+                .replace(/^[A-Z]{2,3}\d+\s*/, '') // Remove course codes like EC3, etc.
+                .trim()
+                .toLowerCase();
+            
+            // Common substitutions for variations
+            const substitutions = {
+                'summary': 'summary',
+                'prep': 'prep sheet',
+                'preparation': 'prep sheet',
+                'st ': 'st ',
+                'student task': 'st',
+                'reflection': 'reflection',
+                'final': 'final',
+                'presentation': 'presentation'
+            };
+            
+            Object.keys(substitutions).forEach(key => {
+                normalized = normalized.replace(new RegExp(key, 'gi'), substitutions[key]);
+            });
+            
+            return normalized;
+        }
+
+        function normalizeAndDeduplicateColumns(columns) {
+            const normalizedMap = new Map();
+            
+            columns.forEach(col => {
+                const normalized = normalizeColumnName(col);
+                if (!normalizedMap.has(normalized)) {
+                    normalizedMap.set(normalized, col); // Keep the first occurrence as representative
+                }
+            });
+            
+            return Array.from(normalizedMap.values()).sort();
+        }
+
+        function autoSelectColumn(stackingCol, sourceCol) {
+            const stackingNorm = normalizeColumnName(stackingCol);
+            const sourceNorm = normalizeColumnName(sourceCol);
+            
+            // Enhanced matching logic
+            if (stackingNorm === sourceNorm) return true;
+            
+            // Specific matching patterns
+            if (stackingCol.includes('Article') && sourceCol.toLowerCase().includes('article')) {
+                // Match article patterns like "Article 1A Summary" with "1A Summary"
+                const stackingPattern = stackingCol.replace('Article ', '').toLowerCase();
+                const sourcePattern = sourceCol.replace(/^\d+\s*/, '').toLowerCase();
+                if (stackingPattern === sourcePattern) return true;
+            }
+            
+            if (stackingCol.includes('ST ') && sourceCol.toLowerCase().includes('st')) {
+                // Match ST patterns
+                const stackingNum = stackingCol.match(/ST (\d+)/);
+                const sourceNum = sourceCol.match(/st.?(\d+)/i);
+                if (stackingNum && sourceNum && stackingNum[1] === sourceNum[1]) return true;
+            }
+            
+            // Basic partial matches
+            if (stackingCol.toLowerCase().includes('student') && sourceCol.toLowerCase().includes('student')) return true;
+            if (stackingCol.toLowerCase().includes('name') && sourceCol.toLowerCase().includes('name')) return true;
+            if (stackingCol.toLowerCase().includes('grade') && sourceCol.toLowerCase().includes('grade')) return true;
+            if (stackingCol.toLowerCase().includes('absence') && sourceCol.toLowerCase().includes('absence')) return true;
             
             return false;
         }
@@ -842,9 +962,15 @@
             const headers = data[0];
             const students = [];
             
+            // Extract class number from filename
+            const classNumber = extractClassNumber(gradeFile.name);
+            
             for (let i = 1; i < data.length; i++) {
                 const row = data[i];
                 const student = {};
+                
+                // Always add the class number from filename
+                student['Class #'] = classNumber;
                 
                 // Map columns according to mappings
                 headers.forEach((header, index) => {
@@ -852,12 +978,17 @@
                     if (value !== undefined && value !== null && value !== '') {
                         
                         // Check if this column is mapped to a stacking column
-                        const stackingColumn = Object.keys(mappings).find(key => mappings[key] === header);
+                        const stackingColumn = Object.keys(mappings).find(key => {
+                            const mappedSource = mappings[key];
+                            // Use normalized comparison for better matching
+                            return mappedSource === header || normalizeColumnName(mappedSource) === normalizeColumnName(header);
+                        });
+                        
                         if (stackingColumn) {
                             student[stackingColumn] = value;
                         }
                         
-                        // Always include the original column
+                        // Always include the original column for reference
                         student[header] = value;
                     }
                 });
@@ -868,6 +999,25 @@
             }
             
             return students;
+        }
+
+        function extractClassNumber(filename) {
+            // Extract class number from filename patterns like:
+            // "01 EC3_Seminar_SimicYamashita_ GRADES Spring 2025 Mira SimicYamashita.xlsx"
+            // Should return "01"
+            
+            const match = filename.match(/^(\d{2})\s/);
+            if (match) {
+                return match[1];
+            }
+            
+            // Fallback patterns
+            const altMatch = filename.match(/class.?(\d+)/i) || filename.match(/(\d+)/);
+            if (altMatch) {
+                return altMatch[1].padStart(2, '0'); // Ensure 2-digit format
+            }
+            
+            return 'Unknown';
         }
 
         function processAttendanceFile(attendanceFile, primaryStudentId) {
