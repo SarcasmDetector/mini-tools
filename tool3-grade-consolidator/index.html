@@ -768,7 +768,9 @@
                     attendanceFiles: [],
                     commonColumns: new Set(),
                     studentColumns: new Set(),
-                    allColumns: new Map()
+                    allColumns: new Map(),
+                    gradeColumns: new Map(),
+                    attendanceColumns: new Map()
                 };
 
                 for (let file of uploadedFiles) {
@@ -793,8 +795,16 @@
                     
                     if (fileType === 'Grades') {
                         analyzedData.gradeFiles.push(fileData);
+                        // Track grade file columns separately
+                        headers.forEach(header => {
+                            analyzedData.gradeColumns.set(header, (analyzedData.gradeColumns.get(header) || 0) + 1);
+                        });
                     } else if (fileType === 'Attendance') {
                         analyzedData.attendanceFiles.push(fileData);
+                        // Track attendance file columns separately
+                        headers.forEach(header => {
+                            analyzedData.attendanceColumns.set(header, (analyzedData.attendanceColumns.get(header) || 0) + 1);
+                        });
                     }
                     
                     // Track all columns
@@ -859,15 +869,12 @@
                     <div class="mapping-header">🎯 Map Source Columns to Stacking Sheet Format</div>
                     <p style="color: #666; margin-bottom: 20px;">
                         For each selected stacking sheet column, choose which column from your teacher files contains that data.
-                        Leave blank if not applicable.
+                        Sources are grouped by file type (grades vs attendance).
                     </p>
                     <div style="background: #e8f5e8; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
                         <strong>📊 Selected Columns:</strong> ${stackingColumns.length} columns will be populated from teacher files.
                     </div>
             `;
-            
-            // Get all unique columns from all files with improved normalization
-            const allSourceColumns = normalizeAndDeduplicateColumns(Array.from(analyzedData.allColumns.keys()));
             
             stackingColumns.forEach(stackingCol => {
                 // Skip Class # since it comes from filename
@@ -886,15 +893,32 @@
                     return;
                 }
                 
+                // Determine appropriate source columns based on column type
+                let sourceColumns = [];
+                const colLower = stackingCol.toLowerCase();
+                
+                if (colLower.includes('absence') || colLower.includes('annotation')) {
+                    // Attendance-related columns - use attendance file columns
+                    sourceColumns = normalizeAndDeduplicateColumns(Array.from(analyzedData.attendanceColumns.keys()));
+                } else if (colLower.includes('name') || colLower.includes('student')) {
+                    // Student name - available in both types
+                    sourceColumns = normalizeAndDeduplicateColumns(Array.from(analyzedData.allColumns.keys()))
+                        .filter(col => col.toLowerCase().includes('name') || col.toLowerCase().includes('student'));
+                } else {
+                    // Assignment/grade columns - use grade file columns
+                    sourceColumns = normalizeAndDeduplicateColumns(Array.from(analyzedData.gradeColumns.keys()));
+                }
+                
                 mappingHTML += `
                     <div class="column-mapping">
                         <div class="mapping-item">
                             <strong>${stackingCol}:</strong>
+                            <small style="color: #666;">(${getSourceType(stackingCol)})</small>
                         </div>
                         <div class="mapping-item">
                             <select class="mapping-select" data-target="${stackingCol}">
                                 <option value="">-- Select Source Column --</option>
-                                ${allSourceColumns.map(col => 
+                                ${sourceColumns.map(col => 
                                     `<option value="${col}" ${autoSelectColumn(stackingCol, col) ? 'selected' : ''}>${col}</option>`
                                 ).join('')}
                             </select>
@@ -922,9 +946,10 @@
                     </div>
                     <div style="background: #fff3cd; padding: 15px; border-radius: 8px; margin-top: 15px;">
                         <strong>💡 Tips:</strong><br>
-                        • For absences: Look for "Total" column in attendance sheets<br>
-                        • For assignments: Columns are automatically grouped by type (e.g., all "Summary 1A" variations are shown as one option)<br>
-                        • Class numbers are extracted from filenames like "01 EC3_Seminar..."
+                        • <strong>Student Name:</strong> Usually "Name" in both grade and attendance files<br>
+                        • <strong>Absences/Annotations:</strong> From attendance files only<br>
+                        • <strong>Assignments/Grades:</strong> From grade files only<br>
+                        • <strong>Class #:</strong> Extracted from filenames like "01 EC3_Seminar..."
                     </div>
                 </div>
             `;
@@ -933,6 +958,17 @@
             
             // Enable process button
             document.getElementById('processBtn').disabled = false;
+        }
+
+        function getSourceType(columnName) {
+            const colLower = columnName.toLowerCase();
+            if (colLower.includes('absence') || colLower.includes('annotation')) {
+                return 'from attendance files';
+            } else if (colLower.includes('name') || colLower.includes('student')) {
+                return 'from any file';
+            } else {
+                return 'from grade files';
+            }
         }
 
         // Smart column normalization with improved pattern matching for report formats
