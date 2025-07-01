@@ -1,0 +1,1305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sequential Timer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        /* Setup Phase */
+        .setup-container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .timer-builder {
+            margin-bottom: 30px;
+        }
+
+        .timer-list {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            min-height: 100px;
+            border: 2px dashed #dee2e6;
+        }
+
+        .timer-item {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            transition: all 0.3s ease;
+            border-left: 5px solid #667eea;
+        }
+
+        .timer-item.gap {
+            border-left-color: #ffc107;
+            background: #fff9e6;
+        }
+
+        .timer-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+        }
+
+        .timer-icon {
+            font-size: 1.5rem;
+            width: 40px;
+            text-align: center;
+        }
+
+        .timer-details {
+            flex: 1;
+        }
+
+        .timer-name {
+            font-weight: 600;
+            font-size: 1.1rem;
+            margin-bottom: 5px;
+        }
+
+        .timer-duration {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .timer-controls {
+            display: flex;
+            gap: 10px;
+        }
+
+        .control-btn {
+            padding: 8px 12px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+
+        .control-btn.edit {
+            background: #17a2b8;
+            color: white;
+        }
+
+        .control-btn.delete {
+            background: #dc3545;
+            color: white;
+        }
+
+        .control-btn:hover {
+            transform: scale(1.05);
+        }
+
+        .add-timer-form {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            align-items: end;
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .form-label {
+            font-weight: 500;
+            color: #555;
+            font-size: 0.9rem;
+        }
+
+        .form-input {
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .time-inputs {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .time-input {
+            width: 60px;
+            text-align: center;
+        }
+
+        .add-btn {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .add-btn:hover {
+            background: #218838;
+            transform: translateY(-1px);
+        }
+
+        .preset-templates {
+            margin-bottom: 30px;
+        }
+
+        .template-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .template-card {
+            background: #e3f2fd;
+            border: 2px solid #2196f3;
+            border-radius: 12px;
+            padding: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        .template-card:hover {
+            background: #bbdefb;
+            transform: translateY(-2px);
+        }
+
+        .template-title {
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #1976d2;
+        }
+
+        .template-desc {
+            font-size: 0.85rem;
+            color: #424242;
+        }
+
+        .main-controls {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 30px;
+        }
+
+        .main-btn {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.2rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-width: 150px;
+        }
+
+        .start-btn {
+            background: #28a745;
+            color: white;
+        }
+
+        .start-btn:hover {
+            background: #218838;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(40, 167, 69, 0.3);
+        }
+
+        .clear-btn {
+            background: #6c757d;
+            color: white;
+        }
+
+        .clear-btn:hover {
+            background: #5a6268;
+        }
+
+        /* Running Phase */
+        .running-container {
+            display: none;
+            text-align: center;
+            color: white;
+        }
+
+        .timeline-container {
+            background: rgba(255,255,255,0.1);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 30px;
+            backdrop-filter: blur(10px);
+        }
+
+        .timeline {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-bottom: 15px;
+        }
+
+        .timeline-item {
+            background: rgba(255,255,255,0.2);
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .timeline-item.current {
+            background: #28a745;
+            border-color: white;
+            box-shadow: 0 0 10px rgba(40, 167, 69, 0.5);
+        }
+
+        .timeline-item.completed {
+            background: rgba(255,255,255,0.3);
+            opacity: 0.7;
+        }
+
+        .timeline-item.gap {
+            background: #ffc107;
+            color: #333;
+        }
+
+        .timeline-item.gap.current {
+            background: #ff8f00;
+            color: white;
+        }
+
+        .current-timer {
+            background: rgba(255,255,255,0.1);
+            border-radius: 20px;
+            padding: 40px;
+            margin-bottom: 30px;
+            backdrop-filter: blur(10px);
+        }
+
+        .timer-display {
+            font-size: 4rem;
+            font-weight: 700;
+            margin-bottom: 15px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            font-family: 'Courier New', monospace;
+        }
+
+        .timer-label {
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+            opacity: 0.9;
+        }
+
+        .timer-progress {
+            width: 100%;
+            height: 8px;
+            background: rgba(255,255,255,0.3);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: #28a745;
+            transition: width 1s linear;
+            border-radius: 4px;
+        }
+
+        .timer-progress.gap .progress-bar {
+            background: #ffc107;
+        }
+
+        .running-controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            justify-content: center;
+            margin-bottom: 30px;
+        }
+
+        .big-btn {
+            padding: 15px 25px;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-width: 120px;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: 2px solid rgba(255,255,255,0.3);
+        }
+
+        .big-btn:hover {
+            background: rgba(255,255,255,0.3);
+            transform: translateY(-2px);
+        }
+
+        .big-btn.pause {
+            background: #ffc107;
+            color: #333;
+        }
+
+        .big-btn.stop {
+            background: #dc3545;
+        }
+
+        .big-btn.skip {
+            background: #17a2b8;
+        }
+
+        .quick-edit {
+            background: rgba(255,255,255,0.1);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            backdrop-filter: blur(10px);
+        }
+
+        .quick-edit h3 {
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+        }
+
+        .edit-controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .time-adjust {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(255,255,255,0.2);
+            padding: 10px;
+            border-radius: 8px;
+        }
+
+        .adjust-btn {
+            width: 40px;
+            height: 40px;
+            border: none;
+            border-radius: 50%;
+            background: #28a745;
+            color: white;
+            font-size: 1.2rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .adjust-btn:hover {
+            background: #218838;
+            transform: scale(1.1);
+        }
+
+        .adjust-btn.minus {
+            background: #dc3545;
+        }
+
+        .adjust-btn.minus:hover {
+            background: #c82333;
+        }
+
+        .time-display {
+            font-size: 1.1rem;
+            font-weight: 600;
+            min-width: 80px;
+            text-align: center;
+        }
+
+        /* Fullscreen Mode */
+        .fullscreen-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(255,255,255,0.2);
+            border: 2px solid rgba(255,255,255,0.3);
+            color: white;
+            padding: 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.5rem;
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+
+        .fullscreen-toggle:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        body.fullscreen {
+            background: #222;
+            overflow: hidden;
+        }
+
+        body.fullscreen .container {
+            max-width: 100%;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+        }
+
+        body.fullscreen .running-container {
+            width: 100%;
+        }
+
+        body.fullscreen .timer-display {
+            font-size: 8rem;
+        }
+
+        /* Flash Effect */
+        @keyframes flash {
+            0%, 50%, 100% { background: rgba(255,255,255,0.1); }
+            25%, 75% { background: rgba(255,255,255,0.8); }
+        }
+
+        .flash-effect {
+            animation: flash 0.5s ease-in-out 3;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .setup-container {
+                padding: 20px;
+            }
+
+            .add-timer-form {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .time-inputs {
+                justify-content: center;
+            }
+
+            .timer-display {
+                font-size: 2.5rem;
+            }
+
+            body.fullscreen .timer-display {
+                font-size: 4rem;
+            }
+
+            .big-btn {
+                min-width: 100px;
+                padding: 12px 20px;
+            }
+
+            .timeline {
+                justify-content: flex-start;
+                overflow-x: auto;
+                padding-bottom: 10px;
+            }
+        }
+
+        .empty-state {
+            text-align: center;
+            color: #999;
+            font-style: italic;
+            padding: 40px;
+        }
+
+        .total-time {
+            background: rgba(255,255,255,0.1);
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            backdrop-filter: blur(10px);
+        }
+
+        .save-load-controls {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .save-btn, .load-btn {
+            background: #17a2b8;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+
+        .save-btn:hover, .load-btn:hover {
+            background: #138496;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>⏱️ Sequential Timer</h1>
+            <p>Create complex timer sequences with gaps and easy mid-flow adjustments</p>
+        </div>
+
+        <!-- Setup Phase -->
+        <div class="setup-container" id="setupContainer">
+            <!-- Preset Templates -->
+            <div class="preset-templates">
+                <div class="section-title">
+                    📋 Quick Templates
+                </div>
+                <div class="template-grid">
+                    <div class="template-card" onclick="loadTemplate('classroom')">
+                        <div class="template-title">🏫 Classroom Discussion</div>
+                        <div class="template-desc">6min discussion → 5s transition → 1min summary → 5s → 5min wrap-up</div>
+                    </div>
+                    <div class="template-card" onclick="loadTemplate('workout')">
+                        <div class="template-title">💪 HIIT Workout</div>
+                        <div class="template-desc">45s work → 15s rest × 8 rounds</div>
+                    </div>
+                    <div class="template-card" onclick="loadTemplate('meeting')">
+                        <div class="template-title">👔 Meeting Agenda</div>
+                        <div class="template-desc">5min intro → 2s → 10min main → 2s → 3min wrap-up</div>
+                    </div>
+                    <div class="template-card" onclick="loadTemplate('pomodoro')">
+                        <div class="template-title">🍅 Pomodoro</div>
+                        <div class="template-desc">25min work → 5min break → repeat</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Timer Builder -->
+            <div class="timer-builder">
+                <div class="section-title">
+                    ⚙️ Build Your Timer Sequence
+                </div>
+                
+                <div class="timer-list" id="timerList">
+                    <div class="empty-state">
+                        No timers added yet. Use the form below to add your first timer.
+                    </div>
+                </div>
+
+                <div class="add-timer-form">
+                    <div class="form-group">
+                        <label class="form-label">Timer Type</label>
+                        <select class="form-input" id="timerType">
+                            <option value="timer">⏱️ Timer</option>
+                            <option value="gap">⏸️ Gap</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Label</label>
+                        <input type="text" class="form-input" id="timerLabel" placeholder="e.g., Discussion, Work, Rest">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Duration</label>
+                        <div class="time-inputs">
+                            <input type="number" class="form-input time-input" id="minutes" min="0" max="59" value="5" placeholder="MM">
+                            <span>:</span>
+                            <input type="number" class="form-input time-input" id="seconds" min="0" max="59" value="0" placeholder="SS">
+                        </div>
+                    </div>
+
+                    <button class="add-btn" onclick="addTimer()">
+                        ➕ Add Timer
+                    </button>
+                </div>
+
+                <div class="save-load-controls">
+                    <button class="save-btn" onclick="saveSequence()">💾 Save Sequence</button>
+                    <button class="load-btn" onclick="loadSequence()">📁 Load Sequence</button>
+                    <input type="file" id="fileInput" accept=".json" style="display: none;" onchange="handleFileLoad(event)">
+                </div>
+            </div>
+
+            <!-- Main Controls -->
+            <div class="main-controls">
+                <button class="main-btn start-btn" onclick="startSequence()" id="startBtn" disabled>
+                    ▶️ Start Sequence
+                </button>
+                <button class="main-btn clear-btn" onclick="clearAll()">
+                    🗑️ Clear All
+                </button>
+            </div>
+
+            <div class="total-time" id="totalTimeDisplay" style="display: none;">
+                <strong>Total Duration: <span id="totalTime">0:00</span></strong>
+            </div>
+        </div>
+
+        <!-- Running Phase -->
+        <div class="running-container" id="runningContainer">
+            <button class="fullscreen-toggle" onclick="toggleFullscreen()" title="Toggle Fullscreen">
+                ⛶
+            </button>
+
+            <!-- Timeline -->
+            <div class="timeline-container">
+                <div class="timeline" id="timeline"></div>
+                <div class="total-time">
+                    Progress: <span id="overallProgress">0:00</span> / <span id="totalDuration">0:00</span>
+                </div>
+            </div>
+
+            <!-- Current Timer Display -->
+            <div class="current-timer" id="currentTimerDisplay">
+                <div class="timer-label" id="currentLabel">Getting Ready...</div>
+                <div class="timer-display" id="timerDisplay">00:00</div>
+                <div class="timer-progress" id="progressContainer">
+                    <div class="progress-bar" id="progressBar"></div>
+                </div>
+                <div class="timer-duration">
+                    <span id="currentTime">0:00</span> remaining
+                </div>
+            </div>
+
+            <!-- Quick Edit Controls -->
+            <div class="quick-edit" id="quickEdit" style="display: none;">
+                <h3>⚡ Quick Adjustments</h3>
+                <div class="edit-controls" id="editControls">
+                    <!-- Populated dynamically -->
+                </div>
+            </div>
+
+            <!-- Running Controls -->
+            <div class="running-controls">
+                <button class="big-btn pause" onclick="pauseTimer()" id="pauseBtn">
+                    ⏸️ Pause
+                </button>
+                <button class="big-btn skip" onclick="skipCurrent()" id="skipBtn">
+                    ⏭️ Skip
+                </button>
+                <button class="big-btn" onclick="addTime(30)">
+                    +30s
+                </button>
+                <button class="big-btn" onclick="addTime(-30)">
+                    -30s
+                </button>
+                <button class="big-btn stop" onclick="stopSequence()">
+                    ⏹️ Stop
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Audio for notifications -->
+    <audio id="timerEndSound" preload="auto">
+        <source src="data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmogBSuDy/HYjjIIGGvC68J+KQUme8Xx24g4CBdqwuvAfCEFF2+z9uJRGAsVZrjn5a9SFAgGd8bz24s9CBtww+nBfSAEE2ep7OGOPQsVZrjnqqP/TgAHhnmKhWxcfJR1jY52m/fHX0H0fZt3gqOCzV6h5pQ+MjCNvPXVL3CWbmVncKLM9MmqX1KYd3qgpJqcfa5rV39rZ3CZtp5tZF3LUYa1lKOYTG/AABHh4jVUABRqMw2X2qVIbOXR2jmZNQQqSTkTNBJZETpgOQf1G5mHb17n4dJJCCUkOEP3Mb6Nfmo7z+c6EDo5B+ElGNEiC1Cdk38P6A5+wO4yiHzOg3tFn6Jf1NJGLVSidPZ+rh8nH9T8nLXN4O4zJJAiGAUe7K7TM/Y1w66PJ4JvG8UdZsOKsW/BH58RCFZcQCz3PqYOMBhzU6KNTAB5b3nQ4LvUpLRuEPYPc4LN/aV2O9fGIBBLT0DYw8BvUEJ2+nRs6P7N1suww2Rz2r3Y5E2Y8BZqXOPQRbUv5RYY6pDNBVQq5FY0dkA7Pz1tJNmfT2JHW4ByaKcM8W4Z6pJMOBJGTTlYw8Bvd7HQ41/NJVCtF7YOdLA3H9VBpYLh2L9FKNP6U1K8tOZEFdgBzLvP3dLIXb2IKlJTK+VdEkM+ACRoNfBrCwvSj7gvbqGkbtFHSFElW+K/GGFrfIGLMPHBoBJULwJCXwb3EmdO9xLOSmxrWhCCLe6IyLAKQGg1AJ7pIZjFfwH1DJb7JOkB+8qfcgQ6T2yS+wF7AAHp4zdUAAeL2eF2hNyDe0W/L2eB88f2Eg0fNBJTQAePm6GKsZdcr2FgOi9rEQJFOSB8xQJJOEMkNwLyVYKWKCkFU2iO1FcNgT4bGBQT8gGLpHhqJCw0dHgkVhNzPH8e8CJCcOklZcJi8P6eFQ3wLNdBh8q3FyokH9ZCFQr5QNwDO+y7p7lAOCPGz5cQhXf30RQOGdZQEFjN5e7X1UkGAgJGTEkwCAgAXNbLFPcMKJOmPGJFxQJJOEMkMwLyVYKWFCkFU2iO1FcNgT4bGMd8CJCcOglZcJi8P6eFg3wLMdBh8q3FyokH9ZCFQr5QNwDO+y7p7lAOCPGz5cQhXf30RQOGdZQEFjN5e7X1UkGAgJGTEkwCIJGTs8tZcDmAJAJ5LJlVFl6rKGBFjF4RMtL9WJKQFOlYFRFzAQfcdxXzEyojpXoafRSRfC8wJQ7iCx01AIDpJBhBUUBhFkJkawYDZS3zFPpCKaGnrjQEfvEWX2JBxT7dkpJFUf4K3ygL9f88qYl5+y3QzgWEwMYkC0aJkYWa5Y0YvVWrJd5V1dZYjVU8iCrOWPjYNUCdSPHLJUcPYxIa6Y8ACR6EAC/LHE8ACNB8AKxHOLGEywSLYNTiEyyEcCL" type="audio/wav">
+    </audio>
+
+    <script>
+        // Global state
+        let timers = [];
+        let currentTimerIndex = 0;
+        let currentTime = 0;
+        let totalOriginalTime = 0;
+        let isRunning = false;
+        let isPaused = false;
+        let timerInterval = null;
+        let startTime = null;
+        let elapsedTime = 0;
+
+        // Template definitions
+        const templates = {
+            classroom: [
+                { type: 'timer', label: 'Discussion', minutes: 6, seconds: 0 },
+                { type: 'gap', label: 'Transition', minutes: 0, seconds: 5 },
+                { type: 'timer', label: 'Summary', minutes: 1, seconds: 0 },
+                { type: 'gap', label: 'Transition', minutes: 0, seconds: 5 },
+                { type: 'timer', label: 'Wrap-up', minutes: 5, seconds: 0 }
+            ],
+            workout: [
+                { type: 'timer', label: 'Warm-up', minutes: 2, seconds: 0 },
+                { type: 'gap', label: 'Rest', minutes: 0, seconds: 10 },
+                { type: 'timer', label: 'Work', minutes: 0, seconds: 45 },
+                { type: 'gap', label: 'Rest', minutes: 0, seconds: 15 },
+                { type: 'timer', label: 'Work', minutes: 0, seconds: 45 },
+                { type: 'gap', label: 'Rest', minutes: 0, seconds: 15 },
+                { type: 'timer', label: 'Work', minutes: 0, seconds: 45 },
+                { type: 'gap', label: 'Rest', minutes: 0, seconds: 15 },
+                { type: 'timer', label: 'Work', minutes: 0, seconds: 45 },
+                { type: 'gap', label: 'Rest', minutes: 0, seconds: 15 },
+                { type: 'timer', label: 'Cool-down', minutes: 3, seconds: 0 }
+            ],
+            meeting: [
+                { type: 'timer', label: 'Introduction', minutes: 5, seconds: 0 },
+                { type: 'gap', label: 'Transition', minutes: 0, seconds: 2 },
+                { type: 'timer', label: 'Main Discussion', minutes: 10, seconds: 0 },
+                { type: 'gap', label: 'Transition', minutes: 0, seconds: 2 },
+                { type: 'timer', label: 'Wrap-up', minutes: 3, seconds: 0 }
+            ],
+            pomodoro: [
+                { type: 'timer', label: 'Work Session', minutes: 25, seconds: 0 },
+                { type: 'gap', label: 'Short Break', minutes: 5, seconds: 0 },
+                { type: 'timer', label: 'Work Session', minutes: 25, seconds: 0 },
+                { type: 'gap', label: 'Short Break', minutes: 5, seconds: 0 },
+                { type: 'timer', label: 'Work Session', minutes: 25, seconds: 0 },
+                { type: 'gap', label: 'Long Break', minutes: 15, seconds: 0 }
+            ]
+        };
+
+        // Load template
+        function loadTemplate(templateName) {
+            if (templates[templateName]) {
+                timers = templates[templateName].map(t => ({
+                    type: t.type,
+                    label: t.label,
+                    duration: t.minutes * 60 + t.seconds,
+                    originalDuration: t.minutes * 60 + t.seconds
+                }));
+                updateTimerList();
+                updateTotalTime();
+            }
+        }
+
+        // Add timer
+        function addTimer() {
+            const type = document.getElementById('timerType').value;
+            const label = document.getElementById('timerLabel').value || (type === 'gap' ? 'Gap' : 'Timer');
+            const minutes = parseInt(document.getElementById('minutes').value) || 0;
+            const seconds = parseInt(document.getElementById('seconds').value) || 0;
+            
+            const duration = minutes * 60 + seconds;
+            
+            if (duration <= 0) {
+                alert('Please enter a valid duration');
+                return;
+            }
+
+            timers.push({
+                type: type,
+                label: label,
+                duration: duration,
+                originalDuration: duration
+            });
+
+            // Clear form
+            document.getElementById('timerLabel').value = '';
+            document.getElementById('minutes').value = type === 'gap' ? '0' : '5';
+            document.getElementById('seconds').value = type === 'gap' ? '5' : '0';
+
+            updateTimerList();
+            updateTotalTime();
+        }
+
+        // Update timer list display
+        function updateTimerList() {
+            const listContainer = document.getElementById('timerList');
+            const startBtn = document.getElementById('startBtn');
+            
+            if (timers.length === 0) {
+                listContainer.innerHTML = '<div class="empty-state">No timers added yet. Use the form below to add your first timer.</div>';
+                startBtn.disabled = true;
+                return;
+            }
+
+            startBtn.disabled = false;
+            
+            listContainer.innerHTML = timers.map((timer, index) => `
+                <div class="timer-item ${timer.type}">
+                    <div class="timer-icon">${timer.type === 'gap' ? '⏸️' : '⏱️'}</div>
+                    <div class="timer-details">
+                        <div class="timer-name">${timer.label}</div>
+                        <div class="timer-duration">${formatTime(timer.duration)}</div>
+                    </div>
+                    <div class="timer-controls">
+                        <button class="control-btn edit" onclick="editTimer(${index})">Edit</button>
+                        <button class="control-btn delete" onclick="deleteTimer(${index})">Delete</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Delete timer
+        function deleteTimer(index) {
+            timers.splice(index, 1);
+            updateTimerList();
+            updateTotalTime();
+        }
+
+        // Edit timer
+        function editTimer(index) {
+            const timer = timers[index];
+            const newLabel = prompt('Enter new label:', timer.label);
+            const newDuration = prompt('Enter new duration (MM:SS):', formatTime(timer.duration));
+            
+            if (newLabel !== null) {
+                timer.label = newLabel;
+            }
+            
+            if (newDuration !== null) {
+                const parts = newDuration.split(':');
+                const minutes = parseInt(parts[0]) || 0;
+                const seconds = parseInt(parts[1]) || 0;
+                const duration = minutes * 60 + seconds;
+                
+                if (duration > 0) {
+                    timer.duration = duration;
+                    timer.originalDuration = duration;
+                }
+            }
+            
+            updateTimerList();
+            updateTotalTime();
+        }
+
+        // Update total time display
+        function updateTotalTime() {
+            const totalSeconds = timers.reduce((sum, timer) => sum + timer.duration, 0);
+            const totalTimeElement = document.getElementById('totalTime');
+            const totalTimeDisplay = document.getElementById('totalTimeDisplay');
+            
+            if (totalSeconds > 0) {
+                totalTimeElement.textContent = formatTime(totalSeconds);
+                totalTimeDisplay.style.display = 'block';
+            } else {
+                totalTimeDisplay.style.display = 'none';
+            }
+        }
+
+        // Clear all timers
+        function clearAll() {
+            if (timers.length > 0 && confirm('Clear all timers?')) {
+                timers = [];
+                updateTimerList();
+                updateTotalTime();
+            }
+        }
+
+        // Start sequence
+        function startSequence() {
+            if (timers.length === 0) return;
+            
+            currentTimerIndex = 0;
+            isRunning = true;
+            isPaused = false;
+            elapsedTime = 0;
+            
+            // Reset all timer durations to original
+            timers.forEach(timer => {
+                timer.duration = timer.originalDuration;
+            });
+            
+            // Switch to running view
+            document.getElementById('setupContainer').style.display = 'none';
+            document.getElementById('runningContainer').style.display = 'block';
+            
+            // Initialize display
+            updateTimeline();
+            startCurrentTimer();
+        }
+
+        // Start current timer
+        function startCurrentTimer() {
+            if (currentTimerIndex >= timers.length) {
+                completeSequence();
+                return;
+            }
+
+            const currentTimer = timers[currentTimerIndex];
+            currentTime = currentTimer.duration;
+            totalOriginalTime = currentTimer.duration;
+            startTime = Date.now();
+
+            // Update display
+            document.getElementById('currentLabel').textContent = currentTimer.label;
+            document.getElementById('timerDisplay').textContent = formatTime(currentTime);
+            document.getElementById('currentTime').textContent = formatTime(currentTime);
+            
+            // Update progress container class for gap styling
+            const progressContainer = document.getElementById('progressContainer');
+            if (currentTimer.type === 'gap') {
+                progressContainer.classList.add('gap');
+                // Show skip button for gaps
+                document.getElementById('skipBtn').style.display = 'inline-block';
+                document.getElementById('skipBtn').textContent = '⏭️ Skip Gap';
+            } else {
+                progressContainer.classList.remove('gap');
+                document.getElementById('skipBtn').textContent = '⏭️ Skip';
+            }
+
+            updateTimeline();
+            updateQuickEdit();
+            updateOverallProgress();
+
+            // Start timer
+            timerInterval = setInterval(updateTimer, 100);
+        }
+
+        // Update timer
+        function updateTimer() {
+            if (isPaused) return;
+
+            const now = Date.now();
+            const elapsed = Math.floor((now - startTime) / 1000);
+            currentTime = Math.max(0, totalOriginalTime - elapsed);
+
+            // Update display
+            document.getElementById('timerDisplay').textContent = formatTime(currentTime);
+            document.getElementById('currentTime').textContent = formatTime(currentTime);
+
+            // Update progress bar
+            const progress = totalOriginalTime > 0 ? (1 - currentTime / totalOriginalTime) * 100 : 100;
+            document.getElementById('progressBar').style.width = progress + '%';
+
+            updateOverallProgress();
+
+            // Check if timer finished
+            if (currentTime <= 0) {
+                clearInterval(timerInterval);
+                playNotification();
+                flashScreen();
+                
+                // Move to next timer after a brief pause
+                setTimeout(() => {
+                    currentTimerIndex++;
+                    startCurrentTimer();
+                }, 500);
+            }
+        }
+
+        // Update timeline
+        function updateTimeline() {
+            const timeline = document.getElementById('timeline');
+            timeline.innerHTML = timers.map((timer, index) => {
+                let className = 'timeline-item';
+                if (timer.type === 'gap') className += ' gap';
+                if (index < currentTimerIndex) className += ' completed';
+                if (index === currentTimerIndex) className += ' current';
+                
+                return `<div class="${className}">${timer.label}</div>`;
+            }).join('');
+        }
+
+        // Update overall progress
+        function updateOverallProgress() {
+            const totalDuration = timers.reduce((sum, timer) => sum + timer.originalDuration, 0);
+            let elapsedTotal = 0;
+            
+            // Add completed timers
+            for (let i = 0; i < currentTimerIndex; i++) {
+                elapsedTotal += timers[i].originalDuration;
+            }
+            
+            // Add current timer progress
+            if (currentTimerIndex < timers.length) {
+                elapsedTotal += (totalOriginalTime - currentTime);
+            }
+
+            document.getElementById('overallProgress').textContent = formatTime(elapsedTotal);
+            document.getElementById('totalDuration').textContent = formatTime(totalDuration);
+        }
+
+        // Update quick edit controls
+        function updateQuickEdit() {
+            const quickEdit = document.getElementById('quickEdit');
+            const editControls = document.getElementById('editControls');
+            
+            // Show quick edit during gaps or when paused
+            const currentTimer = timers[currentTimerIndex];
+            if (currentTimer && (currentTimer.type === 'gap' || isPaused)) {
+                quickEdit.style.display = 'block';
+                
+                // Show adjustments for upcoming timers
+                const upcomingTimers = timers.slice(currentTimerIndex + 1, currentTimerIndex + 4);
+                editControls.innerHTML = upcomingTimers.map((timer, relativeIndex) => {
+                    const actualIndex = currentTimerIndex + 1 + relativeIndex;
+                    return `
+                        <div class="time-adjust">
+                            <button class="adjust-btn minus" onclick="adjustTimer(${actualIndex}, -30)">-</button>
+                            <div class="time-display">${timer.label}: ${formatTime(timer.duration)}</div>
+                            <button class="adjust-btn" onclick="adjustTimer(${actualIndex}, 30)">+</button>
+                        </div>
+                    `;
+                }).join('');
+            } else {
+                quickEdit.style.display = 'none';
+            }
+        }
+
+        // Adjust timer duration
+        function adjustTimer(index, seconds) {
+            if (index < timers.length) {
+                timers[index].duration = Math.max(5, timers[index].duration + seconds);
+                updateQuickEdit();
+                updateTotalTime();
+            }
+        }
+
+        // Pause/resume timer
+        function pauseTimer() {
+            const pauseBtn = document.getElementById('pauseBtn');
+            
+            if (!isPaused) {
+                isPaused = true;
+                pauseBtn.textContent = '▶️ Resume';
+                pauseBtn.classList.remove('pause');
+                updateQuickEdit();
+            } else {
+                isPaused = false;
+                startTime = Date.now() - (totalOriginalTime - currentTime) * 1000;
+                pauseBtn.textContent = '⏸️ Pause';
+                pauseBtn.classList.add('pause');
+                updateQuickEdit();
+            }
+        }
+
+        // Skip current timer
+        function skipCurrent() {
+            if (timerInterval) {
+                clearInterval(timerInterval);
+            }
+            currentTimerIndex++;
+            startCurrentTimer();
+        }
+
+        // Add time to current timer
+        function addTime(seconds) {
+            totalOriginalTime += seconds;
+            currentTime += seconds;
+            startTime = Date.now() - (totalOriginalTime - currentTime) * 1000;
+            
+            // Update current timer's duration for future reference
+            if (currentTimerIndex < timers.length) {
+                timers[currentTimerIndex].duration = Math.max(5, timers[currentTimerIndex].duration + seconds);
+            }
+        }
+
+        // Stop sequence
+        function stopSequence() {
+            if (confirm('Stop the timer sequence?')) {
+                if (timerInterval) {
+                    clearInterval(timerInterval);
+                }
+                isRunning = false;
+                isPaused = false;
+                
+                // Return to setup
+                document.getElementById('setupContainer').style.display = 'block';
+                document.getElementById('runningContainer').style.display = 'none';
+                
+                // Exit fullscreen if active
+                if (document.fullscreenElement) {
+                    document.exitFullscreen();
+                }
+                document.body.classList.remove('fullscreen');
+            }
+        }
+
+        // Complete sequence
+        function completeSequence() {
+            playNotification();
+            flashScreen();
+            alert('Timer sequence completed! 🎉');
+            stopSequence();
+        }
+
+        // Play notification sound
+        function playNotification() {
+            const audio = document.getElementById('timerEndSound');
+            audio.currentTime = 0;
+            audio.play().catch(e => console.log('Audio play failed:', e));
+        }
+
+        // Flash screen effect
+        function flashScreen() {
+            document.body.classList.add('flash-effect');
+            setTimeout(() => {
+                document.body.classList.remove('flash-effect');
+            }, 1500);
+        }
+
+        // Toggle fullscreen
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().then(() => {
+                    document.body.classList.add('fullscreen');
+                }).catch(err => {
+                    // Fallback to custom fullscreen
+                    document.body.classList.add('fullscreen');
+                });
+            } else {
+                document.exitFullscreen().then(() => {
+                    document.body.classList.remove('fullscreen');
+                }).catch(err => {
+                    document.body.classList.remove('fullscreen');
+                });
+            }
+        }
+
+        // Format time display
+        function formatTime(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            return `${mins}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        // Save sequence to file
+        function saveSequence() {
+            if (timers.length === 0) {
+                alert('No timers to save');
+                return;
+            }
+            
+            const data = {
+                name: prompt('Enter a name for this sequence:') || 'Timer Sequence',
+                timers: timers.map(t => ({
+                    type: t.type,
+                    label: t.label,
+                    duration: t.originalDuration
+                })),
+                created: new Date().toISOString()
+            };
+            
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${data.name.replace(/[^a-z0-9]/gi, '_')}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // Load sequence from file
+        function loadSequence() {
+            document.getElementById('fileInput').click();
+        }
+
+        // Handle file load
+        function handleFileLoad(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    if (data.timers && Array.isArray(data.timers)) {
+                        timers = data.timers.map(t => ({
+                            type: t.type || 'timer',
+                            label: t.label || 'Timer',
+                            duration: t.duration || 60,
+                            originalDuration: t.duration || 60
+                        }));
+                        updateTimerList();
+                        updateTotalTime();
+                        alert(`Loaded sequence: ${data.name || 'Timer Sequence'}`);
+                    } else {
+                        alert('Invalid file format');
+                    }
+                } catch (error) {
+                    alert('Error loading file: ' + error.message);
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set default values
+            document.getElementById('minutes').value = '5';
+            document.getElementById('seconds').value = '0';
+            
+            // Handle escape key to exit fullscreen
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape' && document.body.classList.contains('fullscreen')) {
+                    document.body.classList.remove('fullscreen');
+                }
+            });
+            
+            // Auto-update timer type defaults
+            document.getElementById('timerType').addEventListener('change', function() {
+                const isGap = this.value === 'gap';
+                document.getElementById('minutes').value = isGap ? '0' : '5';
+                document.getElementById('seconds').value = isGap ? '5' : '0';
+                document.getElementById('timerLabel').placeholder = isGap ? 'e.g., Transition, Rest' : 'e.g., Discussion, Work';
+            });
+        });
+    </script>
+</body>
+</html>
