@@ -524,6 +524,67 @@
             font-size: 8rem;
         }
 
+        /* Hide elements in fullscreen mode */
+        body.fullscreen .header {
+            display: none;
+        }
+
+        body.fullscreen .timeline-container {
+            display: none;
+        }
+
+        body.fullscreen .quick-edit {
+            display: none;
+        }
+
+        body.fullscreen .running-controls {
+            display: none;
+        }
+
+        body.fullscreen .current-timer {
+            background: transparent;
+            text-align: center;
+        }
+
+        /* Simplified fullscreen layout */
+        body.fullscreen .running-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+
+        body.fullscreen .timer-label {
+            font-size: 2.5rem;
+            margin-bottom: 30px;
+        }
+
+        body.fullscreen .timer-progress {
+            max-width: 600px;
+            height: 12px;
+            margin: 30px auto;
+        }
+
+        body.fullscreen .timer-duration {
+            font-size: 1.8rem;
+            margin-top: 20px;
+        }
+
+        /* Show minimal progress info in fullscreen */
+        body.fullscreen .fullscreen-progress {
+            display: block;
+            position: fixed;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255,255,255,0.1);
+            padding: 15px 30px;
+            border-radius: 25px;
+            backdrop-filter: blur(10px);
+            font-size: 1.2rem;
+        }
+
         /* Flash Effect */
         @keyframes flash {
             0%, 50%, 100% { background: rgba(255,255,255,0.1); }
@@ -736,6 +797,11 @@
                 <div class="timer-duration">
                     <span id="currentTime">0:00</span> remaining
                 </div>
+            </div>
+
+            <!-- Fullscreen-only progress info -->
+            <div class="fullscreen-progress" style="display: none;">
+                Progress: <span id="fullscreenProgress">0:00</span> / <span id="fullscreenTotal">0:00</span>
             </div>
 
             <!-- Quick Edit Controls -->
@@ -1071,8 +1137,13 @@
                 elapsedTotal += (totalOriginalTime - currentTime);
             }
 
+            // Update regular progress displays
             document.getElementById('overallProgress').textContent = formatTime(elapsedTotal);
             document.getElementById('totalDuration').textContent = formatTime(totalDuration);
+            
+            // Update fullscreen progress displays
+            document.getElementById('fullscreenProgress').textContent = formatTime(elapsedTotal);
+            document.getElementById('fullscreenTotal').textContent = formatTime(totalDuration);
         }
 
         // Update quick edit controls
@@ -1199,15 +1270,19 @@
             if (!document.fullscreenElement) {
                 document.documentElement.requestFullscreen().then(() => {
                     document.body.classList.add('fullscreen');
+                    document.querySelector('.fullscreen-progress').style.display = 'block';
                 }).catch(err => {
                     // Fallback to custom fullscreen
                     document.body.classList.add('fullscreen');
+                    document.querySelector('.fullscreen-progress').style.display = 'block';
                 });
             } else {
                 document.exitFullscreen().then(() => {
                     document.body.classList.remove('fullscreen');
+                    document.querySelector('.fullscreen-progress').style.display = 'none';
                 }).catch(err => {
                     document.body.classList.remove('fullscreen');
+                    document.querySelector('.fullscreen-progress').style.display = 'none';
                 });
             }
         }
