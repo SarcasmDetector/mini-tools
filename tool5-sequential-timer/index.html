@@ -5,1376 +5,883 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sequential Timer</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --primary: #667eea;
+            --primary-dark: #764ba2;
+            --gap-col: #95a5a6;
+            --green: #28a745;
+            --red: #dc3545;
         }
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
+            padding: 20px;
             color: #333;
-            overflow-x: hidden;
         }
 
         .container {
-            max-width: 1200px;
+            max-width: 960px;
             margin: 0 auto;
-            padding: 20px;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+            overflow: hidden;
         }
 
+        /* ── HEADER ── */
         .header {
-            text-align: center;
+            background: linear-gradient(135deg, #667eea, #764ba2);
             color: white;
-            margin-bottom: 40px;
-        }
-
-        .header h1 {
-            font-size: 2.5rem;
-            margin-bottom: 10px;
-            font-weight: 700;
-        }
-
-        .header p {
-            font-size: 1.1rem;
-            opacity: 0.9;
-        }
-
-        /* Setup Phase */
-        .setup-container {
-            background: white;
-            border-radius: 20px;
-            padding: 40px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
-        }
-
-        .section-title {
-            font-size: 1.5rem;
-            font-weight: 600;
-            margin-bottom: 20px;
-            color: #333;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .timer-builder {
-            margin-bottom: 30px;
-        }
-
-        .timer-list {
-            background: #f8f9fa;
-            border-radius: 15px;
-            padding: 20px;
-            margin-bottom: 20px;
-            min-height: 100px;
-            border: 2px dashed #dee2e6;
-        }
-
-        .timer-item {
-            background: white;
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 15px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            transition: all 0.3s ease;
-            border-left: 5px solid #667eea;
-        }
-
-        .timer-item.gap {
-            border-left-color: #ffc107;
-            background: #fff9e6;
-        }
-
-        .timer-item:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(0,0,0,0.15);
-        }
-
-        .timer-icon {
-            font-size: 1.5rem;
-            width: 40px;
+            padding: 25px 30px;
             text-align: center;
         }
+        .header h1 { font-size: 2rem; font-weight: 700; margin-bottom: 4px; }
+        .header p  { opacity: .9; font-size: 1rem; }
 
-        .timer-details {
-            flex: 1;
+        /* ════════════════════════════════════════
+           SETUP PANEL
+        ════════════════════════════════════════ */
+        .setup-panel { padding: 30px; }
+
+        /* Templates row */
+        .templates-row {
+            display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 22px;
+        }
+        .tpl-btn {
+            padding: 7px 15px;
+            border: 2px solid #ddd; border-radius: 20px;
+            background: white; cursor: pointer; font-size: .85rem;
+            transition: all .2s;
+        }
+        .tpl-btn:hover { border-color: var(--primary); background: #f0f4ff; }
+
+        /* Segment list */
+        .seg-item {
+            display: flex; align-items: center; gap: 10px;
+            padding: 11px 14px; background: #f8f9fa;
+            border-radius: 10px; margin-bottom: 7px;
+            border: 2px solid transparent; transition: border-color .2s;
+        }
+        .seg-item:hover { border-color: #e0e0e0; }
+
+        .seg-dot {
+            width: 11px; height: 11px;
+            border-radius: 50%; flex-shrink: 0;
         }
 
-        .timer-name {
-            font-weight: 600;
-            font-size: 1.1rem;
-            margin-bottom: 5px;
+        .seg-name {
+            flex: 1; border: none; background: transparent;
+            font-size: .97rem; color: #333; font-family: inherit;
         }
+        .seg-name:focus { outline: none; }
 
-        .timer-duration {
-            color: #666;
-            font-size: 0.9rem;
+        .seg-dur {
+            display: flex; align-items: center; gap: 4px;
+            background: white; border: 2px solid #e0e0e0;
+            border-radius: 8px; padding: 5px 9px;
         }
-
-        .timer-controls {
-            display: flex;
-            gap: 10px;
+        .dur-input {
+            width: 34px; border: none; text-align: center;
+            font-size: .97rem; font-family: inherit; color: #333;
         }
+        .dur-input:focus { outline: none; }
+        .dur-sep { color: #aaa; font-weight: 700; }
 
-        .control-btn {
-            padding: 8px 12px;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 0.9rem;
-            transition: all 0.3s ease;
+        .type-badge {
+            padding: 4px 11px;
+            border: 2px solid; border-radius: 20px;
+            cursor: pointer; font-size: .78rem; font-weight: 700;
+            white-space: nowrap; transition: all .2s;
         }
+        .type-timer { border-color: var(--primary); color: var(--primary); background: #f0f4ff; }
+        .type-gap   { border-color: var(--gap-col);  color: var(--gap-col);  background: #f5f5f5; }
 
-        .control-btn.edit {
-            background: #17a2b8;
-            color: white;
+        .seg-del {
+            background: none; border: none;
+            color: #ccc; font-size: 1.1rem; cursor: pointer;
+            transition: color .2s; line-height: 1; padding: 2px;
         }
+        .seg-del:hover { color: var(--red); }
 
-        .control-btn.delete {
-            background: #dc3545;
-            color: white;
-        }
-
-        .control-btn:hover {
-            transform: scale(1.05);
-        }
-
-        .add-timer-form {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 15px;
-            align-items: end;
-            background: white;
-            padding: 20px;
-            border-radius: 12px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-
-        .form-group {
-            display: flex;
-            flex-direction: column;
-            gap: 5px;
-        }
-
-        .form-label {
-            font-weight: 500;
-            color: #555;
-            font-size: 0.9rem;
-        }
-
-        .form-input {
-            padding: 10px;
-            border: 2px solid #ddd;
-            border-radius: 6px;
-            font-size: 1rem;
-            transition: border-color 0.3s ease;
-        }
-
-        .form-input:focus {
-            outline: none;
-            border-color: #667eea;
-        }
-
-        .time-inputs {
-            display: flex;
-            gap: 8px;
-            align-items: center;
-        }
-
-        .time-input {
-            width: 60px;
-            text-align: center;
-        }
-
+        /* Add buttons */
+        .add-row { display: flex; gap: 10px; margin-bottom: 22px; }
         .add-btn {
-            background: #28a745;
-            color: white;
-            border: none;
-            padding: 12px 20px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 1rem;
-            font-weight: 600;
-            transition: all 0.3s ease;
+            padding: 9px 18px; border: 2px dashed;
+            border-radius: 8px; background: white;
+            cursor: pointer; font-size: .9rem; transition: all .2s;
         }
+        .add-timer-btn { border-color: var(--primary); color: var(--primary); }
+        .add-timer-btn:hover { background: #f0f4ff; }
+        .add-gap-btn { border-color: var(--gap-col); color: var(--gap-col); }
+        .add-gap-btn:hover { background: #f5f5f5; }
 
-        .add-btn:hover {
-            background: #218838;
-            transform: translateY(-1px);
+        /* Sequence preview */
+        .preview-bar {
+            background: #f0f4ff; border-radius: 10px;
+            padding: 14px 16px; margin-bottom: 6px;
+            display: flex; align-items: center;
+            flex-wrap: wrap; gap: 4px; min-height: 48px;
         }
-
-        .preset-templates {
-            margin-bottom: 30px;
+        .prev-chip {
+            padding: 5px 11px; border-radius: 13px;
+            font-size: .78rem; font-weight: 700;
         }
+        .prev-timer { background: var(--primary); color: white; }
+        .prev-gap   { background: #ddd; color: #666; }
+        .prev-arrow { color: #bbb; font-size: .75rem; }
+        .total-line { font-size: .88rem; color: #888; margin-bottom: 18px; }
 
-        .template-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
+        /* Options */
+        .opt-row { display: flex; gap: 22px; flex-wrap: wrap; margin-bottom: 22px; align-items: center; }
+        .opt-grp { display: flex; align-items: center; gap: 8px; }
+        .opt-label { font-size: .9rem; color: #555; }
+        .toggle-btn {
+            position: relative; width: 44px; height: 24px;
+            background: #ddd; border-radius: 12px;
+            cursor: pointer; border: none; transition: background .2s;
         }
-
-        .template-card {
-            background: #e3f2fd;
-            border: 2px solid #2196f3;
-            border-radius: 12px;
-            padding: 15px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            text-align: center;
+        .toggle-btn.on { background: var(--primary); }
+        .toggle-btn::after {
+            content: ''; position: absolute;
+            top: 3px; left: 3px;
+            width: 18px; height: 18px;
+            background: white; border-radius: 50%; transition: left .2s;
         }
+        .toggle-btn.on::after { left: 23px; }
 
-        .template-card:hover {
-            background: #bbdefb;
-            transform: translateY(-2px);
-        }
-
-        .template-title {
-            font-weight: 600;
-            margin-bottom: 8px;
-            color: #1976d2;
-        }
-
-        .template-desc {
-            font-size: 0.85rem;
-            color: #424242;
-        }
-
-        .main-controls {
-            display: flex;
-            gap: 15px;
-            justify-content: center;
-            margin-top: 30px;
-        }
-
-        .main-btn {
-            padding: 15px 30px;
-            border: none;
-            border-radius: 12px;
-            font-size: 1.2rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            min-width: 150px;
-        }
-
+        /* Start button */
         .start-btn {
-            background: #28a745;
-            color: white;
+            width: 100%; padding: 17px;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white; border: none; border-radius: 12px;
+            font-size: 1.25rem; font-weight: 700; cursor: pointer;
+            transition: all .3s;
         }
-
-        .start-btn:hover {
-            background: #218838;
+        .start-btn:hover:not(:disabled) {
             transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(40, 167, 69, 0.3);
+            box-shadow: 0 8px 20px rgba(102,126,234,.4);
         }
+        .start-btn:disabled { opacity: .45; cursor: not-allowed; }
 
-        .clear-btn {
-            background: #6c757d;
-            color: white;
+        /* ════════════════════════════════════════
+           RUNNING PANEL
+        ════════════════════════════════════════ */
+        .running-panel { display: none; padding: 28px; }
+
+        /* Sequence strip */
+        .strip {
+            display: flex; align-items: center; gap: 3px;
+            flex-wrap: wrap; margin-bottom: 18px;
         }
-
-        .clear-btn:hover {
-            background: #5a6268;
+        .strip-chip {
+            padding: 4px 10px; border-radius: 11px;
+            font-size: .73rem; font-weight: 700; transition: all .3s;
         }
+        .sc-pending  { background: #f0f0f0; color: #bbb; }
+        .sc-current  { background: var(--primary); color: white; transform: scale(1.06); }
+        .sc-done     { background: #d4edda; color: #28a745; }
+        .sc-gap-pend { background: #f0f0f0; color: #bbb; font-style: italic; }
+        .sc-gap-cur  { background: #e0e0e0; color: #777; transform: scale(1.06); }
+        .sc-gap-done { background: #f0f0f0; color: #bbb; }
+        .strip-arr   { color: #ccc; font-size: .7rem; }
 
-        /* Running Phase */
-        .running-container {
-            display: none;
-            text-align: center;
-            color: white;
-        }
-
-        .timeline-container {
-            background: rgba(255,255,255,0.1);
-            border-radius: 15px;
-            padding: 20px;
-            margin-bottom: 30px;
-            backdrop-filter: blur(10px);
-        }
-
-        .timeline {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            justify-content: center;
-            flex-wrap: wrap;
-            margin-bottom: 15px;
-        }
-
-        .timeline-item {
-            background: rgba(255,255,255,0.2);
-            padding: 8px 12px;
-            border-radius: 8px;
-            font-size: 0.9rem;
-            border: 2px solid transparent;
-            transition: all 0.3s ease;
-        }
-
-        .timeline-item.current {
-            background: #28a745;
-            border-color: white;
-            box-shadow: 0 0 10px rgba(40, 167, 69, 0.5);
-        }
-
-        .timeline-item.completed {
-            background: rgba(255,255,255,0.3);
-            opacity: 0.7;
-        }
-
-        .timeline-item.gap {
-            background: #ffc107;
-            color: #333;
-        }
-
-        .timeline-item.gap.current {
-            background: #ff8f00;
-            color: white;
-        }
-
-        .current-timer {
-            background: rgba(255,255,255,0.1);
-            border-radius: 20px;
-            padding: 40px;
-            margin-bottom: 30px;
-            backdrop-filter: blur(10px);
-        }
-
+        /* ── MAIN DISPLAY ── */
         .timer-display {
-            font-size: 4rem;
-            font-weight: 700;
-            margin-bottom: 15px;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
-            font-family: 'Courier New', monospace;
-        }
-
-        .timer-label {
-            font-size: 1.5rem;
-            margin-bottom: 10px;
-            opacity: 0.9;
-        }
-
-        .timer-progress {
-            width: 100%;
-            height: 8px;
-            background: rgba(255,255,255,0.3);
-            border-radius: 4px;
-            overflow: hidden;
+            text-align: center;
+            padding: 30px 20px 24px;
+            background: #f5f5f5;
+            border-radius: 16px;
             margin-bottom: 20px;
         }
 
-        .progress-bar {
+        .seg-label {
+            font-size: clamp(1.1rem, 3.5vw, 1.8rem);
+            color: #777; font-weight: 600;
+            text-transform: uppercase; letter-spacing: 3px;
+            margin-bottom: 6px; transition: color .3s;
+        }
+        .seg-label.gap-style { color: #bbb; }
+
+        /* THE DIGITS — big in normal mode, enormous in fullscreen */
+        .digits {
+            font-size: clamp(5.5rem, 22vw, 11rem);
+            font-weight: 700; color: #1a1a1a;
+            line-height: 1; font-variant-numeric: tabular-nums;
+            font-family: 'Courier New', Courier, monospace;
+            margin-bottom: 16px; transition: color .3s;
+            letter-spacing: -2px;
+        }
+        .digits.gap-style { color: #aaa; }
+
+        /* Progress */
+        .prog-wrap { max-width: 520px; margin: 0 auto; }
+        .prog-bg {
+            height: 10px; background: #e0e0e0;
+            border-radius: 5px; overflow: hidden;
+        }
+        .prog-fill {
             height: 100%;
-            background: #28a745;
-            transition: width 1s linear;
-            border-radius: 4px;
+            background: linear-gradient(90deg, var(--primary), var(--primary-dark));
+            border-radius: 5px; transition: width .6s ease;
+        }
+        .prog-fill.gap-style { background: linear-gradient(90deg, #aaa, #888); }
+        .overall-prog {
+            font-size: .85rem; color: #aaa; margin-top: 6px;
         }
 
-        .timer-progress.gap .progress-bar {
-            background: #ffc107;
+        /* Quick adjust */
+        .adjust-row {
+            display: flex; justify-content: center;
+            gap: 8px; margin-bottom: 18px; flex-wrap: wrap;
+        }
+        .adj-btn {
+            padding: 8px 15px;
+            border: 2px solid #e0e0e0; border-radius: 8px;
+            background: white; color: #666; cursor: pointer;
+            font-size: .88rem; transition: all .2s;
+        }
+        .adj-btn:hover { border-color: var(--primary); color: var(--primary); }
+
+        /* Controls */
+        .ctrl-row {
+            display: flex; justify-content: center;
+            gap: 10px; flex-wrap: wrap;
+        }
+        .ctrl {
+            padding: 11px 22px; border: none; border-radius: 10px;
+            font-size: .97rem; font-weight: 600; cursor: pointer; transition: all .2s;
+        }
+        .ctrl-primary {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white; min-width: 110px;
+        }
+        .ctrl-primary:hover { transform: translateY(-1px); }
+        .ctrl-secondary { background: #f0f0f0; color: #555; }
+        .ctrl-secondary:hover { background: #e4e4e4; }
+        .ctrl-edit { background: #fff5f5; color: var(--red); border: 2px solid #ffcccc; }
+        .ctrl-edit:hover { background: #ffe0e0; }
+        .ctrl-fs { background: #222; color: white; }
+        .ctrl-fs:hover { background: #111; }
+
+        .kb-hint {
+            text-align: center; color: #ccc; font-size: .78rem; margin-top: 14px;
         }
 
-        .running-controls {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 15px;
-            justify-content: center;
-            margin-bottom: 30px;
+        /* ════════════════════════════════════════
+           COMPLETE PANEL
+        ════════════════════════════════════════ */
+        .complete-panel {
+            display: none; padding: 50px 30px; text-align: center;
         }
+        .cmp-icon  { font-size: 4rem; margin-bottom: 16px; }
+        .cmp-title { font-size: 2.2rem; font-weight: 700; color: #333; margin-bottom: 8px; }
+        .cmp-sub   { font-size: 1.05rem; color: #888; margin-bottom: 32px; }
+        .cmp-actions { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; }
 
-        .big-btn {
-            padding: 15px 25px;
-            border: none;
-            border-radius: 12px;
-            font-size: 1.1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            min-width: 120px;
-            background: rgba(255,255,255,0.2);
+        /* ════════════════════════════════════════
+           FULLSCREEN
+        ════════════════════════════════════════ */
+        body.fs .container {
+            max-width: none; border-radius: 0;
+            min-height: 100vh; display: flex; flex-direction: column;
+        }
+        body.fs { padding: 0; overflow: hidden; }
+        body.fs .header { display: none; }
+        body.fs .setup-panel { display: none !important; }
+
+        /* Running in fullscreen */
+        body.fs .running-panel {
+            flex: 1; display: flex !important;
+            flex-direction: column; justify-content: center; align-items: center;
+            padding: 30px; background: #0d0d0d;
+        }
+        body.fs .strip       { display: none; }
+        body.fs .adjust-row  { display: none; }
+        body.fs .kb-hint     { color: #333; }
+
+        body.fs .timer-display {
+            background: transparent; padding: 0; width: 100%;
+        }
+        body.fs .seg-label {
+            font-size: clamp(1.8rem, 6vw, 5rem);
+            color: #666;
+        }
+        body.fs .seg-label.gap-style { color: #444; }
+
+        /* ★ THE MAIN FIX — truly enormous in fullscreen ★ */
+        body.fs .digits {
+            font-size: min(40vw, 50vh);
             color: white;
-            border: 2px solid rgba(255,255,255,0.3);
+            letter-spacing: -4px;
         }
+        body.fs .digits.gap-style { color: #444; }
 
-        .big-btn:hover {
-            background: rgba(255,255,255,0.3);
-            transform: translateY(-2px);
+        body.fs .prog-wrap { max-width: 75%; }
+        body.fs .prog-bg   { height: 14px; }
+        body.fs .overall-prog { color: #444; font-size: .95rem; }
+
+        body.fs .ctrl-row { margin-top: 28px; }
+        body.fs .ctrl { padding: 14px 28px; font-size: 1.05rem; }
+        body.fs .ctrl-secondary { background: rgba(255,255,255,.1); color: #999; }
+        body.fs .ctrl-secondary:hover { background: rgba(255,255,255,.18); }
+        body.fs .ctrl-edit  { background: rgba(220,53,69,.1); color: #ff6b6b; border-color: rgba(220,53,69,.3); }
+        body.fs .ctrl-edit:hover { background: rgba(220,53,69,.2); }
+        body.fs .ctrl-fs    { background: rgba(255,255,255,.1); color: #999; }
+        body.fs .ctrl-fs:hover { background: rgba(255,255,255,.18); }
+
+        /* Complete in fullscreen */
+        body.fs .complete-panel {
+            flex: 1; display: flex !important;
+            flex-direction: column; justify-content: center; align-items: center;
+            background: #0d0d0d;
         }
+        body.fs .cmp-icon  { font-size: 6rem; }
+        body.fs .cmp-title { color: white; font-size: 3.5rem; }
+        body.fs .cmp-sub   { color: #666; font-size: 1.3rem; }
+        body.fs .ctrl-secondary { background: rgba(255,255,255,.1); color: #999; }
 
-        .big-btn.pause {
-            background: #ffc107;
-            color: #333;
+        /* Sound fab */
+        .sound-fab {
+            position: fixed; bottom: 18px; right: 18px;
+            font-size: 1.3rem; cursor: pointer;
+            opacity: .45; transition: opacity .2s;
+            z-index: 999; user-select: none;
         }
+        .sound-fab:hover { opacity: 1; }
 
-        .big-btn.stop {
-            background: #dc3545;
-        }
-
-        .big-btn.skip {
-            background: #17a2b8;
-        }
-
-        .quick-edit {
-            background: rgba(255,255,255,0.1);
-            border-radius: 15px;
-            padding: 20px;
-            margin-bottom: 20px;
-            backdrop-filter: blur(10px);
-        }
-
-        .quick-edit h3 {
-            margin-bottom: 15px;
-            font-size: 1.2rem;
-        }
-
-        .edit-controls {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .time-adjust {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            background: rgba(255,255,255,0.2);
-            padding: 10px;
-            border-radius: 8px;
-        }
-
-        .adjust-btn {
-            width: 40px;
-            height: 40px;
-            border: none;
-            border-radius: 50%;
-            background: #28a745;
-            color: white;
-            font-size: 1.2rem;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .adjust-btn:hover {
-            background: #218838;
-            transform: scale(1.1);
-        }
-
-        .adjust-btn.minus {
-            background: #dc3545;
-        }
-
-        .adjust-btn.minus:hover {
-            background: #c82333;
-        }
-
-        .time-display {
-            font-size: 1.1rem;
-            font-weight: 600;
-            min-width: 80px;
-            text-align: center;
-        }
-
-        /* Fullscreen Mode */
-        .fullscreen-toggle {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: rgba(255,255,255,0.2);
-            border: 2px solid rgba(255,255,255,0.3);
-            color: white;
-            padding: 10px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 1.5rem;
-            transition: all 0.3s ease;
-            z-index: 1000;
-        }
-
-        .fullscreen-toggle:hover {
-            background: rgba(255,255,255,0.3);
-        }
-
-        body.fullscreen {
-            background: #222;
-            overflow: hidden;
-        }
-
-        body.fullscreen .container {
-            max-width: 100%;
-            height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 40px;
-        }
-
-        body.fullscreen .running-container {
-            width: 100%;
-        }
-
-        body.fullscreen .timer-display {
-            font-size: 8rem;
-        }
-
-        /* Hide elements in fullscreen mode */
-        body.fullscreen .header {
-            display: none;
-        }
-
-        body.fullscreen .timeline-container {
-            display: none;
-        }
-
-        body.fullscreen .quick-edit {
-            display: none;
-        }
-
-        body.fullscreen .running-controls {
-            display: none;
-        }
-
-        body.fullscreen .current-timer {
-            background: transparent;
-            text-align: center;
-        }
-
-        /* Simplified fullscreen layout */
-        body.fullscreen .running-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-        }
-
-        body.fullscreen .timer-label {
-            font-size: 2.5rem;
-            margin-bottom: 30px;
-        }
-
-        body.fullscreen .timer-progress {
-            max-width: 600px;
-            height: 12px;
-            margin: 30px auto;
-        }
-
-        body.fullscreen .timer-duration {
-            font-size: 1.8rem;
-            margin-top: 20px;
-        }
-
-        /* Show minimal progress info in fullscreen */
-        body.fullscreen .fullscreen-progress {
-            display: block;
-            position: fixed;
-            bottom: 40px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(255,255,255,0.1);
-            padding: 15px 30px;
-            border-radius: 25px;
-            backdrop-filter: blur(10px);
-            font-size: 1.2rem;
-        }
-
-        /* Flash Effect */
-        @keyframes flash {
-            0%, 50%, 100% { background: rgba(255,255,255,0.1); }
-            25%, 75% { background: rgba(255,255,255,0.8); }
-        }
-
-        .flash-effect {
-            animation: flash 0.5s ease-in-out 3;
-        }
-
-        /* Responsive Design */
-        @media (max-width: 768px) {
-            .container {
-                padding: 15px;
-            }
-
-            .header h1 {
-                font-size: 2rem;
-            }
-
-            .setup-container {
-                padding: 20px;
-            }
-
-            .add-timer-form {
-                flex-direction: column;
-                align-items: stretch;
-            }
-
-            .time-inputs {
-                justify-content: center;
-            }
-
-            .timer-display {
-                font-size: 2.5rem;
-            }
-
-            body.fullscreen .timer-display {
-                font-size: 4rem;
-            }
-
-            .big-btn {
-                min-width: 100px;
-                padding: 12px 20px;
-            }
-
-            .timeline {
-                justify-content: flex-start;
-                overflow-x: auto;
-                padding-bottom: 10px;
-            }
-        }
-
-        .empty-state {
-            text-align: center;
-            color: #999;
-            font-style: italic;
-            padding: 40px;
-        }
-
-        .total-time {
-            background: rgba(255,255,255,0.1);
-            padding: 15px;
-            border-radius: 10px;
-            margin-top: 20px;
-            backdrop-filter: blur(10px);
-        }
-
-        .save-load-controls {
-            display: flex;
-            gap: 10px;
-            margin-top: 20px;
-            flex-wrap: wrap;
-        }
-
-        .save-btn, .load-btn {
-            background: #17a2b8;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 0.9rem;
-            transition: all 0.3s ease;
-        }
-
-        .save-btn:hover, .load-btn:hover {
-            background: #138496;
+        /* ── Responsive ── */
+        @media (max-width: 600px) {
+            body { padding: 0; }
+            .container { border-radius: 0; }
+            .setup-panel, .running-panel { padding: 18px; }
+            .ctrl-row { gap: 7px; }
+            .ctrl { padding: 9px 14px; font-size: .88rem; }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <!-- Header -->
-        <div class="header">
-            <h1>⏱️ Sequential Timer</h1>
-            <p>Create complex timer sequences with gaps and easy mid-flow adjustments</p>
+<div class="container">
+
+    <!-- ── HEADER ── -->
+    <div class="header">
+        <h1>⏱ Sequential Timer</h1>
+        <p>Build and run timed sequences for any activity</p>
+    </div>
+
+    <!-- ════════════════════════════════════════
+         SETUP PANEL
+    ════════════════════════════════════════ -->
+    <div class="setup-panel" id="setupPanel">
+
+        <div style="font-size:.8rem;color:#bbb;text-transform:uppercase;letter-spacing:1px;margin-bottom:9px;">Quick templates</div>
+        <div class="templates-row">
+            <button class="tpl-btn" onclick="loadTpl('class')">🏫 Class Activity</button>
+            <button class="tpl-btn" onclick="loadTpl('pomodoro')">🍅 Pomodoro</button>
+            <button class="tpl-btn" onclick="loadTpl('workout')">💪 Workout</button>
+            <button class="tpl-btn" onclick="loadTpl('meeting')">📋 Meeting</button>
+            <button class="tpl-btn" onclick="loadTpl('blank')">＋ Blank</button>
         </div>
 
-        <!-- Setup Phase -->
-        <div class="setup-container" id="setupContainer">
-            <!-- Preset Templates -->
-            <div class="preset-templates">
-                <div class="section-title">
-                    📋 Quick Templates
-                </div>
-                <div class="template-grid">
-                    <div class="template-card" onclick="loadTemplate('classroom')">
-                        <div class="template-title">🏫 Classroom Discussion</div>
-                        <div class="template-desc">6min discussion → 5s transition → 1min summary → 5s → 5min wrap-up</div>
-                    </div>
-                    <div class="template-card" onclick="loadTemplate('workout')">
-                        <div class="template-title">💪 HIIT Workout</div>
-                        <div class="template-desc">45s work → 15s rest × 8 rounds</div>
-                    </div>
-                    <div class="template-card" onclick="loadTemplate('meeting')">
-                        <div class="template-title">👔 Meeting Agenda</div>
-                        <div class="template-desc">5min intro → 2s → 10min main → 2s → 3min wrap-up</div>
-                    </div>
-                    <div class="template-card" onclick="loadTemplate('pomodoro')">
-                        <div class="template-title">🍅 Pomodoro</div>
-                        <div class="template-desc">25min work → 5min break → repeat</div>
-                    </div>
-                </div>
+        <div id="segList"></div>
+
+        <div class="add-row">
+            <button class="add-btn add-timer-btn" onclick="addSeg('timer')">＋ Add Timer</button>
+            <button class="add-btn add-gap-btn"   onclick="addSeg('gap')">＋ Add Gap</button>
+        </div>
+
+        <div class="preview-bar" id="previewBar">
+            <span style="color:#ccc;font-size:.9rem;">Add timers above to preview your sequence…</span>
+        </div>
+        <div class="total-line" id="totalLine"></div>
+
+        <div class="opt-row">
+            <div class="opt-grp">
+                <button class="toggle-btn" id="togSound" onclick="toggleOpt('sound')"></button>
+                <span class="opt-label">🔔 Sound alerts</span>
             </div>
-
-            <!-- Timer Builder -->
-            <div class="timer-builder">
-                <div class="section-title">
-                    ⚙️ Build Your Timer Sequence
-                </div>
-                
-                <div class="timer-list" id="timerList">
-                    <div class="empty-state">
-                        No timers added yet. Use the form below to add your first timer.
-                    </div>
-                </div>
-
-                <div class="add-timer-form">
-                    <div class="form-group">
-                        <label class="form-label">Timer Type</label>
-                        <select class="form-input" id="timerType">
-                            <option value="timer">⏱️ Timer</option>
-                            <option value="gap">⏸️ Gap</option>
-                        </select>
-                    </div>
-
-                    <div class="form-group">
-                        <label class="form-label">Label</label>
-                        <input type="text" class="form-input" id="timerLabel" placeholder="e.g., Discussion, Work, Rest">
-                    </div>
-
-                    <div class="form-group">
-                        <label class="form-label">Duration</label>
-                        <div class="time-inputs">
-                            <input type="number" class="form-input time-input" id="minutes" min="0" max="59" value="5" placeholder="MM">
-                            <span>:</span>
-                            <input type="number" class="form-input time-input" id="seconds" min="0" max="59" value="0" placeholder="SS">
-                        </div>
-                    </div>
-
-                    <button class="add-btn" onclick="addTimer()">
-                        ➕ Add Timer
-                    </button>
-                </div>
-
-                <div class="save-load-controls">
-                    <button class="save-btn" onclick="saveSequence()">💾 Save Sequence</button>
-                    <button class="load-btn" onclick="loadSequence()">📁 Load Sequence</button>
-                    <input type="file" id="fileInput" accept=".json" style="display: none;" onchange="handleFileLoad(event)">
-                </div>
+            <div class="opt-grp">
+                <button class="toggle-btn on" id="togCdown" onclick="toggleOpt('cdown')"></button>
+                <span class="opt-label">🔢 3-2-1 beeps</span>
             </div>
-
-            <!-- Main Controls -->
-            <div class="main-controls">
-                <button class="main-btn start-btn" onclick="startSequence()" id="startBtn" disabled>
-                    ▶️ Start Sequence
-                </button>
-                <button class="main-btn clear-btn" onclick="clearAll()">
-                    🗑️ Clear All
-                </button>
-            </div>
-
-            <div class="total-time" id="totalTimeDisplay" style="display: none;">
-                <strong>Total Duration: <span id="totalTime">0:00</span></strong>
+            <div class="opt-grp">
+                <button class="toggle-btn on" id="togLoop" onclick="toggleOpt('loop')"></button>
+                <span class="opt-label">🔁 Loop sequence</span>
             </div>
         </div>
 
-        <!-- Running Phase -->
-        <div class="running-container" id="runningContainer">
-            <button class="fullscreen-toggle" onclick="toggleFullscreen()" title="Toggle Fullscreen">
-                ⛶
-            </button>
+        <button class="start-btn" id="startBtn" onclick="startSeq()" disabled>▶ Start Sequence</button>
+    </div>
 
-            <!-- Timeline -->
-            <div class="timeline-container">
-                <div class="timeline" id="timeline"></div>
-                <div class="total-time">
-                    Progress: <span id="overallProgress">0:00</span> / <span id="totalDuration">0:00</span>
+    <!-- ════════════════════════════════════════
+         RUNNING PANEL
+    ════════════════════════════════════════ -->
+    <div class="running-panel" id="runPanel">
+
+        <div class="strip" id="strip"></div>
+
+        <div class="timer-display" id="timerDisplay">
+            <div class="seg-label" id="segLabel">READY</div>
+            <div class="digits"    id="digits">00:00</div>
+            <div class="prog-wrap">
+                <div class="prog-bg">
+                    <div class="prog-fill" id="progFill" style="width:0%"></div>
                 </div>
+                <div class="overall-prog" id="overallProg"></div>
             </div>
+        </div>
 
-            <!-- Current Timer Display -->
-            <div class="current-timer" id="currentTimerDisplay">
-                <div class="timer-label" id="currentLabel">Getting Ready...</div>
-                <div class="timer-display" id="timerDisplay">00:00</div>
-                <div class="timer-progress" id="progressContainer">
-                    <div class="progress-bar" id="progressBar"></div>
-                </div>
-                <div class="timer-duration">
-                    <span id="currentTime">0:00</span> remaining
-                </div>
-            </div>
+        <div class="adjust-row" id="adjRow">
+            <button class="adj-btn" onclick="adj(-60)">−1 min</button>
+            <button class="adj-btn" onclick="adj(-30)">−30 s</button>
+            <button class="adj-btn" onclick="adj(30)">+30 s</button>
+            <button class="adj-btn" onclick="adj(60)">+1 min</button>
+        </div>
 
-            <!-- Fullscreen-only progress info -->
-            <div class="fullscreen-progress" style="display: none;">
-                Progress: <span id="fullscreenProgress">0:00</span> / <span id="fullscreenTotal">0:00</span>
-            </div>
+        <div class="ctrl-row">
+            <button class="ctrl ctrl-secondary" onclick="restartSeq()">↺ Restart</button>
+            <button class="ctrl ctrl-primary"   id="pauseBtn" onclick="togglePause()">⏸ Pause</button>
+            <button class="ctrl ctrl-secondary" onclick="skipSeg()">⏭ Skip</button>
+            <button class="ctrl ctrl-edit"      onclick="backToSetup()">✕ Edit</button>
+            <button class="ctrl ctrl-fs"        onclick="toggleFS()" id="fsBtn">⛶ Fullscreen</button>
+        </div>
 
-            <!-- Quick Edit Controls -->
-            <div class="quick-edit" id="quickEdit" style="display: none;">
-                <h3>⚡ Quick Adjustments</h3>
-                <div class="edit-controls" id="editControls">
-                    <!-- Populated dynamically -->
-                </div>
-            </div>
+        <div class="kb-hint">Space = pause · ← −30 s · → +30 s · F = fullscreen · Esc = exit fullscreen</div>
+    </div>
 
-            <!-- Running Controls -->
-            <div class="running-controls">
-                <button class="big-btn pause" onclick="pauseTimer()" id="pauseBtn">
-                    ⏸️ Pause
-                </button>
-                <button class="big-btn skip" onclick="skipCurrent()" id="skipBtn">
-                    ⏭️ Skip
-                </button>
-                <button class="big-btn" onclick="addTime(30)">
-                    +30s
-                </button>
-                <button class="big-btn" onclick="addTime(-30)">
-                    -30s
-                </button>
-                <button class="big-btn stop" onclick="stopSequence()">
-                    ⏹️ Stop
-                </button>
-            </div>
+    <!-- ════════════════════════════════════════
+         COMPLETE PANEL
+    ════════════════════════════════════════ -->
+    <div class="complete-panel" id="cmpPanel">
+        <div class="cmp-icon">🎉</div>
+        <div class="cmp-title">Sequence Complete!</div>
+        <div class="cmp-sub" id="cmpSub"></div>
+        <div class="cmp-actions">
+            <button class="ctrl ctrl-primary"   onclick="restartSeq()">↺ Run Again</button>
+            <button class="ctrl ctrl-secondary" onclick="backToSetup()">✎ Edit Sequence</button>
         </div>
     </div>
 
-    <!-- Audio for notifications -->
-    <audio id="timerEndSound" preload="auto">
-        <source src="data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmogBSuDy/HYjjIIGGvC68J+KQUme8Xx24g4CBdqwuvAfCEFF2+z9uJRGAsVZrjn5a9SFAgGd8bz24s9CBtww+nBfSAEE2ep7OGOPQsVZrjnqqP/TgAHhnmKhWxcfJR1jY52m/fHX0H0fZt3gqOCzV6h5pQ+MjCNvPXVL3CWbmVncKLM9MmqX1KYd3qgpJqcfa5rV39rZ3CZtp5tZF3LUYa1lKOYTG/AABHh4jVUABRqMw2X2qVIbOXR2jmZNQQqSTkTNBJZETpgOQf1G5mHb17n4dJJCCUkOEP3Mb6Nfmo7z+c6EDo5B+ElGNEiC1Cdk38P6A5+wO4yiHzOg3tFn6Jf1NJGLVSidPZ+rh8nH9T8nLXN4O4zJJAiGAUe7K7TM/Y1w66PJ4JvG8UdZsOKsW/BH58RCFZcQCz3PqYOMBhzU6KNTAB5b3nQ4LvUpLRuEPYPc4LN/aV2O9fGIBBLT0DYw8BvUEJ2+nRs6P7N1suww2Rz2r3Y5E2Y8BZqXOPQRbUv5RYY6pDNBVQq5FY0dkA7Pz1tJNmfT2JHW4ByaKcM8W4Z6pJMOBJGTTlYw8Bvd7HQ41/NJVCtF7YOdLA3H9VBpYLh2L9FKNP6U1K8tOZEFdgBzLvP3dLIXb2IKlJTK+VdEkM+ACRoNfBrCwvSj7gvbqGkbtFHSFElW+K/GGFrfIGLMPHBoBJULwJCXwb3EmdO9xLOSmxrWhCCLe6IyLAKQGg1AJ7pIZjFfwH1DJb7JOkB+8qfcgQ6T2yS+wF7AAHp4zdUAAeL2eF2hNyDe0W/L2eB88f2Eg0fNBJTQAePm6GKsZdcr2FgOi9rEQJFOSB8xQJJOEMkNwLyVYKWKCkFU2iO1FcNgT4bGBQT8gGLpHhqJCw0dHgkVhNzPH8e8CJCcOklZcJi8P6eFQ3wLNdBh8q3FyokH9ZCFQr5QNwDO+y7p7lAOCPGz5cQhXf30RQOGdZQEFjN5e7X1UkGAgJGTEkwCAgAXNbLFPcMKJOmPGJFxQJJOEMkMwLyVYKWFCkFU2iO1FcNgT4bGMd8CJCcOglZcJi8P6eFg3wLMdBh8q3FyokH9ZCFQr5QNwDO+y7p7lAOCPGz5cQhXf30RQOGdZQEFjN5e7X1UkGAgJGTEkwCIJGTs8tZcDmAJAJ5LJlVFl6rKGBFjF4RMtL9WJKQFOlYFRFzAQfcdxXzEyojpXoafRSRfC8wJQ7iCx01AIDpJBhBUUBhFkJkawYDZS3zFPpCKaGnrjQEfvEWX2JBxT7dkpJFUf4K3ygL9f88qYl5+y3QzgWEwMYkC0aJkYWa5Y0YvVWrJd5V1dZYjVU8iCrOWPjYNUCdSPHLJUcPYxIa6Y8ACR6EAC/LHE8ACNB8AKxHOLGEywSLYNTiEyyEcCL" type="audio/wav">
-    </audio>
+</div><!-- /container -->
 
-    <script>
-        // Global state
-        let timers = [];
-        let currentTimerIndex = 0;
-        let currentTime = 0;
-        let totalOriginalTime = 0;
-        let isRunning = false;
-        let isPaused = false;
-        let timerInterval = null;
-        let startTime = null;
-        let elapsedTime = 0;
+<div class="sound-fab" id="soundFab" onclick="toggleOpt('sound')" title="Toggle sound">🔕</div>
 
-        // Template definitions
-        const templates = {
-            classroom: [
-                { type: 'timer', label: 'Discussion', minutes: 6, seconds: 0 },
-                { type: 'gap', label: 'Transition', minutes: 0, seconds: 5 },
-                { type: 'timer', label: 'Summary', minutes: 1, seconds: 0 },
-                { type: 'gap', label: 'Transition', minutes: 0, seconds: 5 },
-                { type: 'timer', label: 'Wrap-up', minutes: 5, seconds: 0 }
-            ],
-            workout: [
-                { type: 'timer', label: 'Warm-up', minutes: 2, seconds: 0 },
-                { type: 'gap', label: 'Rest', minutes: 0, seconds: 10 },
-                { type: 'timer', label: 'Work', minutes: 0, seconds: 45 },
-                { type: 'gap', label: 'Rest', minutes: 0, seconds: 15 },
-                { type: 'timer', label: 'Work', minutes: 0, seconds: 45 },
-                { type: 'gap', label: 'Rest', minutes: 0, seconds: 15 },
-                { type: 'timer', label: 'Work', minutes: 0, seconds: 45 },
-                { type: 'gap', label: 'Rest', minutes: 0, seconds: 15 },
-                { type: 'timer', label: 'Work', minutes: 0, seconds: 45 },
-                { type: 'gap', label: 'Rest', minutes: 0, seconds: 15 },
-                { type: 'timer', label: 'Cool-down', minutes: 3, seconds: 0 }
-            ],
-            meeting: [
-                { type: 'timer', label: 'Introduction', minutes: 5, seconds: 0 },
-                { type: 'gap', label: 'Transition', minutes: 0, seconds: 2 },
-                { type: 'timer', label: 'Main Discussion', minutes: 10, seconds: 0 },
-                { type: 'gap', label: 'Transition', minutes: 0, seconds: 2 },
-                { type: 'timer', label: 'Wrap-up', minutes: 3, seconds: 0 }
-            ],
-            pomodoro: [
-                { type: 'timer', label: 'Work Session', minutes: 25, seconds: 0 },
-                { type: 'gap', label: 'Short Break', minutes: 5, seconds: 0 },
-                { type: 'timer', label: 'Work Session', minutes: 25, seconds: 0 },
-                { type: 'gap', label: 'Short Break', minutes: 5, seconds: 0 },
-                { type: 'timer', label: 'Work Session', minutes: 25, seconds: 0 },
-                { type: 'gap', label: 'Long Break', minutes: 15, seconds: 0 }
-            ]
-        };
+<script>
+/* ══════════════════════════════════════════════
+   DATA
+══════════════════════════════════════════════ */
+let segs = [];
+let uid  = 1;
 
-        // Load template
-        function loadTemplate(templateName) {
-            if (templates[templateName]) {
-                timers = templates[templateName].map(t => ({
-                    type: t.type,
-                    label: t.label,
-                    duration: t.minutes * 60 + t.seconds,
-                    originalDuration: t.minutes * 60 + t.seconds
-                }));
-                updateTimerList();
-                updateTotalTime();
-            }
-        }
+const opts = { sound: false, cdown: true, loop: true };
 
-        // Add timer
-        function addTimer() {
-            const type = document.getElementById('timerType').value;
-            const label = document.getElementById('timerLabel').value || (type === 'gap' ? 'Gap' : 'Timer');
-            const minutes = parseInt(document.getElementById('minutes').value) || 0;
-            const seconds = parseInt(document.getElementById('seconds').value) || 0;
-            
-            const duration = minutes * 60 + seconds;
-            
-            if (duration <= 0) {
-                alert('Please enter a valid duration');
-                return;
-            }
+const run = {
+    active: false, paused: false,
+    idx: 0, rem: 0, dur: 0,
+    totalDur: 0, totalElapsed: 0,
+    tick: null
+};
 
-            timers.push({
-                type: type,
-                label: label,
-                duration: duration,
-                originalDuration: duration
-            });
+let inFS = false;
+let audioCtx = null;
 
-            // Clear form
-            document.getElementById('timerLabel').value = '';
-            document.getElementById('minutes').value = type === 'gap' ? '0' : '5';
-            document.getElementById('seconds').value = type === 'gap' ? '5' : '0';
+/* ══════════════════════════════════════════════
+   AUDIO
+══════════════════════════════════════════════ */
+function getCtx() {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    return audioCtx;
+}
 
-            updateTimerList();
-            updateTotalTime();
-        }
+function beep(freq=880, dur=.15, vol=.3, type='sine') {
+    if (!opts.sound) return;
+    try {
+        const c = getCtx();
+        const o = c.createOscillator();
+        const g = c.createGain();
+        o.connect(g); g.connect(c.destination);
+        o.type = type; o.frequency.value = freq;
+        g.gain.setValueAtTime(vol, c.currentTime);
+        g.gain.exponentialRampToValueAtTime(.001, c.currentTime + dur);
+        o.start(c.currentTime); o.stop(c.currentTime + dur);
+    } catch(e) {}
+}
 
-        // Update timer list display
-        function updateTimerList() {
-            const listContainer = document.getElementById('timerList');
-            const startBtn = document.getElementById('startBtn');
-            
-            if (timers.length === 0) {
-                listContainer.innerHTML = '<div class="empty-state">No timers added yet. Use the form below to add your first timer.</div>';
-                startBtn.disabled = true;
-                return;
-            }
+function playTransition() { beep(660,.12); setTimeout(()=>beep(880,.18), 140); }
+function playComplete()    { beep(523,.2); setTimeout(()=>beep(659,.2),200); setTimeout(()=>beep(784,.4),400); }
+function playCountdown(n)  { if (opts.cdown) beep(n===1?1046:880, .1, .25); }
 
-            startBtn.disabled = false;
-            
-            listContainer.innerHTML = timers.map((timer, index) => `
-                <div class="timer-item ${timer.type}">
-                    <div class="timer-icon">${timer.type === 'gap' ? '⏸️' : '⏱️'}</div>
-                    <div class="timer-details">
-                        <div class="timer-name">${timer.label}</div>
-                        <div class="timer-duration">${formatTime(timer.duration)}</div>
-                    </div>
-                    <div class="timer-controls">
-                        <button class="control-btn edit" onclick="editTimer(${index})">Edit</button>
-                        <button class="control-btn delete" onclick="deleteTimer(${index})">Delete</button>
-                    </div>
-                </div>
-            `).join('');
-        }
+/* ══════════════════════════════════════════════
+   SEGMENT MANAGEMENT
+══════════════════════════════════════════════ */
+function addSeg(type, name, mins, secs) {
+    const def = type==='gap'
+        ? {name:'Gap', mins:0, secs:5}
+        : {name:'Timer', mins:1, secs:0};
+    segs.push({
+        id: uid++, type,
+        name: name !== undefined ? name : def.name,
+        mins: mins !== undefined ? mins : def.mins,
+        secs: secs !== undefined ? secs : def.secs
+    });
+    renderSegs(); renderPreview();
+}
 
-        // Delete timer
-        function deleteTimer(index) {
-            timers.splice(index, 1);
-            updateTimerList();
-            updateTotalTime();
-        }
+function removeSeg(id) {
+    segs = segs.filter(s=>s.id!==id);
+    renderSegs(); renderPreview();
+}
 
-        // Edit timer
-        function editTimer(index) {
-            const timer = timers[index];
-            const newLabel = prompt('Enter new label:', timer.label);
-            const newDuration = prompt('Enter new duration (MM:SS):', formatTime(timer.duration));
-            
-            if (newLabel !== null) {
-                timer.label = newLabel;
-            }
-            
-            if (newDuration !== null) {
-                const parts = newDuration.split(':');
-                const minutes = parseInt(parts[0]) || 0;
-                const seconds = parseInt(parts[1]) || 0;
-                const duration = minutes * 60 + seconds;
-                
-                if (duration > 0) {
-                    timer.duration = duration;
-                    timer.originalDuration = duration;
-                }
-            }
-            
-            updateTimerList();
-            updateTotalTime();
-        }
+function updateSeg(id, field, val) {
+    const s = segs.find(s=>s.id===id);
+    if (!s) return;
+    if (field==='mins') s.mins = Math.max(0, Math.min(99, parseInt(val)||0));
+    else if (field==='secs') s.secs = Math.max(0, Math.min(59, parseInt(val)||0));
+    else s[field] = val;
+    renderPreview();
+}
 
-        // Update total time display
-        function updateTotalTime() {
-            const totalSeconds = timers.reduce((sum, timer) => sum + timer.duration, 0);
-            const totalTimeElement = document.getElementById('totalTime');
-            const totalTimeDisplay = document.getElementById('totalTimeDisplay');
-            
-            if (totalSeconds > 0) {
-                totalTimeElement.textContent = formatTime(totalSeconds);
-                totalTimeDisplay.style.display = 'block';
-            } else {
-                totalTimeDisplay.style.display = 'none';
-            }
-        }
+function flipType(id) {
+    const s = segs.find(s=>s.id===id);
+    if (!s) return;
+    s.type = s.type==='timer' ? 'gap' : 'timer';
+    renderSegs(); renderPreview();
+}
 
-        // Clear all timers
-        function clearAll() {
-            if (timers.length > 0 && confirm('Clear all timers?')) {
-                timers = [];
-                updateTimerList();
-                updateTotalTime();
-            }
-        }
+function dur(s) { return (parseInt(s.mins)||0)*60 + (parseInt(s.secs)||0); }
+function totalDur() { return segs.reduce((t,s)=>t+dur(s),0); }
 
-        // Start sequence
-        function startSequence() {
-            if (timers.length === 0) return;
-            
-            currentTimerIndex = 0;
-            isRunning = true;
-            isPaused = false;
-            elapsedTime = 0;
-            
-            // Reset all timer durations to original
-            timers.forEach(timer => {
-                timer.duration = timer.originalDuration;
-            });
-            
-            // Switch to running view
-            document.getElementById('setupContainer').style.display = 'none';
-            document.getElementById('runningContainer').style.display = 'block';
-            
-            // Initialize display
-            updateTimeline();
-            startCurrentTimer();
-        }
+function esc(str) {
+    return String(str)
+        .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+        .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
 
-        // Start current timer
-        function startCurrentTimer() {
-            if (currentTimerIndex >= timers.length) {
-                completeSequence();
-                return;
-            }
+function renderSegs() {
+    const el = document.getElementById('segList');
+    if (!segs.length) {
+        el.innerHTML = `<div style="text-align:center;color:#bbb;padding:18px 0;
+            border:2px dashed #e0e0e0;border-radius:10px;margin-bottom:10px;">
+            No segments yet — add one below!</div>`;
+        document.getElementById('startBtn').disabled = true;
+        return;
+    }
+    el.innerHTML = segs.map(s => `
+        <div class="seg-item" id="si-${s.id}">
+            <div class="seg-dot" style="background:${s.type==='timer'?'#667eea':'#aaa'}"></div>
+            <input class="seg-name" value="${esc(s.name)}"
+                onchange="updateSeg(${s.id},'name',this.value)"
+                placeholder="${s.type==='gap'?'Gap label':'Timer name'}">
+            <div class="seg-dur">
+                <input class="dur-input" type="number" min="0" max="99"
+                    value="${s.mins}"
+                    onchange="updateSeg(${s.id},'mins',this.value)"
+                    oninput="updateSeg(${s.id},'mins',this.value)">
+                <span class="dur-sep">:</span>
+                <input class="dur-input" type="number" min="0" max="59"
+                    value="${String(s.secs).padStart(2,'0')}"
+                    onchange="updateSeg(${s.id},'secs',this.value)"
+                    oninput="updateSeg(${s.id},'secs',this.value)">
+            </div>
+            <button class="type-badge ${s.type==='timer'?'type-timer':'type-gap'}"
+                onclick="flipType(${s.id})">
+                ${s.type==='timer'?'⏱ Timer':'⏸ Gap'}
+            </button>
+            <button class="seg-del" onclick="removeSeg(${s.id})" title="Delete">✕</button>
+        </div>
+    `).join('');
+    document.getElementById('startBtn').disabled = !segs.some(s=>dur(s)>0);
+}
 
-            const currentTimer = timers[currentTimerIndex];
-            currentTime = currentTimer.duration;
-            totalOriginalTime = currentTimer.duration;
-            startTime = Date.now();
+function renderPreview() {
+    const bar = document.getElementById('previewBar');
+    const tl  = document.getElementById('totalLine');
+    if (!segs.length) {
+        bar.innerHTML = `<span style="color:#ccc;font-size:.9rem;">Add timers above to preview your sequence…</span>`;
+        tl.textContent = '';
+        return;
+    }
+    const chips = segs.map(s =>
+        `<span class="prev-chip ${s.type==='timer'?'prev-timer':'prev-gap'}">${esc(s.name)}: ${fmt(dur(s))}</span>`
+    ).join('<span class="prev-arrow"> → </span>');
+    bar.innerHTML = chips;
+    tl.textContent = `Total: ${fmt(totalDur())}`;
+}
 
-            // Update display
-            document.getElementById('currentLabel').textContent = currentTimer.label;
-            document.getElementById('timerDisplay').textContent = formatTime(currentTime);
-            document.getElementById('currentTime').textContent = formatTime(currentTime);
-            
-            // Update progress container class for gap styling
-            const progressContainer = document.getElementById('progressContainer');
-            if (currentTimer.type === 'gap') {
-                progressContainer.classList.add('gap');
-                // Show skip button for gaps
-                document.getElementById('skipBtn').style.display = 'inline-block';
-                document.getElementById('skipBtn').textContent = '⏭️ Skip Gap';
-            } else {
-                progressContainer.classList.remove('gap');
-                document.getElementById('skipBtn').textContent = '⏭️ Skip';
-            }
+/* ══════════════════════════════════════════════
+   TEMPLATES
+══════════════════════════════════════════════ */
+const TPLS = {
+    class: [
+        {type:'timer',name:'Introduction',   mins:2,  secs:0},
+        {type:'gap',  name:'Transition',     mins:0,  secs:5},
+        {type:'timer',name:'Group Work',     mins:6,  secs:0},
+        {type:'gap',  name:'Transition',     mins:0,  secs:5},
+        {type:'timer',name:'Presentations',  mins:5,  secs:0},
+        {type:'gap',  name:'Transition',     mins:0,  secs:5},
+        {type:'timer',name:'Wrap-up',        mins:2,  secs:0},
+    ],
+    pomodoro: [
+        {type:'timer',name:'Focus',          mins:25, secs:0},
+        {type:'gap',  name:'Short Break',    mins:5,  secs:0},
+        {type:'timer',name:'Focus',          mins:25, secs:0},
+        {type:'gap',  name:'Short Break',    mins:5,  secs:0},
+        {type:'timer',name:'Focus',          mins:25, secs:0},
+        {type:'gap',  name:'Long Break',     mins:15, secs:0},
+    ],
+    workout: [
+        {type:'timer',name:'Warm Up',        mins:5,  secs:0},
+        {type:'gap',  name:'Rest',           mins:0,  secs:30},
+        {type:'timer',name:'Set 1',          mins:1,  secs:0},
+        {type:'gap',  name:'Rest',           mins:0,  secs:30},
+        {type:'timer',name:'Set 2',          mins:1,  secs:0},
+        {type:'gap',  name:'Rest',           mins:0,  secs:30},
+        {type:'timer',name:'Cool Down',      mins:3,  secs:0},
+    ],
+    meeting: [
+        {type:'timer',name:'Agenda Review',  mins:3,  secs:0},
+        {type:'gap',  name:'',               mins:0,  secs:5},
+        {type:'timer',name:'Main Discussion',mins:20, secs:0},
+        {type:'gap',  name:'',               mins:0,  secs:5},
+        {type:'timer',name:'Action Items',   mins:5,  secs:0},
+    ],
+    blank: []
+};
 
-            updateTimeline();
-            updateQuickEdit();
-            updateOverallProgress();
+function loadTpl(name) {
+    segs = []; uid = 1;
+    (TPLS[name]||[]).forEach(t => segs.push({id:uid++,...t}));
+    renderSegs(); renderPreview();
+}
 
-            // Start timer
-            timerInterval = setInterval(updateTimer, 100);
-        }
+/* ══════════════════════════════════════════════
+   TIMER ENGINE
+══════════════════════════════════════════════ */
+function startSeq() {
+    if (!segs.length) return;
+    run.active = true; run.paused = false;
+    run.idx = 0; run.totalElapsed = 0;
+    run.totalDur = totalDur();
 
-        // Update timer
-        function updateTimer() {
-            if (isPaused) return;
+    show('runPanel');
+    renderStrip();
+    startSeg(0);
+}
 
-            const now = Date.now();
-            const elapsed = Math.floor((now - startTime) / 1000);
-            currentTime = Math.max(0, totalOriginalTime - elapsed);
+function startSeg(idx) {
+    if (idx >= segs.length) { onComplete(); return; }
 
-            // Update display
-            document.getElementById('timerDisplay').textContent = formatTime(currentTime);
-            document.getElementById('currentTime').textContent = formatTime(currentTime);
+    const s = segs[idx];
+    const d = dur(s);
+    run.idx = idx; run.rem = d; run.dur = d;
 
-            // Update progress bar
-            const progress = totalOriginalTime > 0 ? (1 - currentTime / totalOriginalTime) * 100 : 100;
-            document.getElementById('progressBar').style.width = progress + '%';
+    if (d === 0) { run.totalElapsed += 0; startSeg(idx+1); return; }
 
-            updateOverallProgress();
+    updateRunDisplay();
+    renderStrip();
+    clearInterval(run.tick);
+    run.tick = setInterval(tick, 1000);
+}
 
-            // Check if timer finished
-            if (currentTime <= 0) {
-                clearInterval(timerInterval);
-                playNotification();
-                flashScreen();
-                
-                // Move to next timer after a brief pause
-                setTimeout(() => {
-                    currentTimerIndex++;
-                    startCurrentTimer();
-                }, 500);
-            }
-        }
+function tick() {
+    if (run.paused) return;
+    run.rem--; run.totalElapsed++;
 
-        // Update timeline
-        function updateTimeline() {
-            const timeline = document.getElementById('timeline');
-            timeline.innerHTML = timers.map((timer, index) => {
-                let className = 'timeline-item';
-                if (timer.type === 'gap') className += ' gap';
-                if (index < currentTimerIndex) className += ' completed';
-                if (index === currentTimerIndex) className += ' current';
-                
-                return `<div class="${className}">${timer.label}</div>`;
-            }).join('');
-        }
+    // Countdown beeps
+    if (opts.sound && opts.cdown && run.rem > 0 && run.rem <= 3) playCountdown(run.rem);
 
-        // Update overall progress
-        function updateOverallProgress() {
-            const totalDuration = timers.reduce((sum, timer) => sum + timer.originalDuration, 0);
-            let elapsedTotal = 0;
-            
-            // Add completed timers
-            for (let i = 0; i < currentTimerIndex; i++) {
-                elapsedTotal += timers[i].originalDuration;
-            }
-            
-            // Add current timer progress
-            if (currentTimerIndex < timers.length) {
-                elapsedTotal += (totalOriginalTime - currentTime);
-            }
+    if (run.rem <= 0) {
+        clearInterval(run.tick); run.tick = null;
+        playTransition();
+        setTimeout(()=>startSeg(run.idx+1), 250);
+        return;
+    }
+    updateRunDisplay();
+}
 
-            // Update regular progress displays
-            document.getElementById('overallProgress').textContent = formatTime(elapsedTotal);
-            document.getElementById('totalDuration').textContent = formatTime(totalDuration);
-            
-            // Update fullscreen progress displays
-            document.getElementById('fullscreenProgress').textContent = formatTime(elapsedTotal);
-            document.getElementById('fullscreenTotal').textContent = formatTime(totalDuration);
-        }
+function updateRunDisplay() {
+    const s = segs[run.idx];
+    if (!s) return;
+    const isGap = s.type === 'gap';
 
-        // Update quick edit controls
-        function updateQuickEdit() {
-            const quickEdit = document.getElementById('quickEdit');
-            const editControls = document.getElementById('editControls');
-            
-            // Show quick edit during gaps or when paused
-            const currentTimer = timers[currentTimerIndex];
-            if (currentTimer && (currentTimer.type === 'gap' || isPaused)) {
-                quickEdit.style.display = 'block';
-                
-                // Show adjustments for upcoming timers
-                const upcomingTimers = timers.slice(currentTimerIndex + 1, currentTimerIndex + 4);
-                editControls.innerHTML = upcomingTimers.map((timer, relativeIndex) => {
-                    const actualIndex = currentTimerIndex + 1 + relativeIndex;
-                    return `
-                        <div class="time-adjust">
-                            <button class="adjust-btn minus" onclick="adjustTimer(${actualIndex}, -30)">-</button>
-                            <div class="time-display">${timer.label}: ${formatTime(timer.duration)}</div>
-                            <button class="adjust-btn" onclick="adjustTimer(${actualIndex}, 30)">+</button>
-                        </div>
-                    `;
-                }).join('');
-            } else {
-                quickEdit.style.display = 'none';
-            }
-        }
+    const lbl = document.getElementById('segLabel');
+    lbl.textContent  = s.name || (isGap ? 'GAP' : 'TIMER');
+    lbl.className    = 'seg-label' + (isGap ? ' gap-style' : '');
 
-        // Adjust timer duration
-        function adjustTimer(index, seconds) {
-            if (index < timers.length) {
-                timers[index].duration = Math.max(5, timers[index].duration + seconds);
-                updateQuickEdit();
-                updateTotalTime();
-            }
-        }
+    const dig = document.getElementById('digits');
+    dig.textContent = fmt(run.rem);
+    dig.className   = 'digits' + (isGap ? ' gap-style' : '');
 
-        // Pause/resume timer
-        function pauseTimer() {
-            const pauseBtn = document.getElementById('pauseBtn');
-            
-            if (!isPaused) {
-                isPaused = true;
-                pauseBtn.textContent = '▶️ Resume';
-                pauseBtn.classList.remove('pause');
-                updateQuickEdit();
-            } else {
-                isPaused = false;
-                startTime = Date.now() - (totalOriginalTime - currentTime) * 1000;
-                pauseBtn.textContent = '⏸️ Pause';
-                pauseBtn.classList.add('pause');
-                updateQuickEdit();
-            }
-        }
+    const pct = run.dur > 0 ? ((run.dur - run.rem) / run.dur) * 100 : 100;
+    const fill = document.getElementById('progFill');
+    fill.style.width = pct + '%';
+    fill.className   = 'prog-fill' + (isGap ? ' gap-style' : '');
 
-        // Skip current timer
-        function skipCurrent() {
-            if (timerInterval) {
-                clearInterval(timerInterval);
-            }
-            currentTimerIndex++;
-            startCurrentTimer();
-        }
+    const oPct = run.totalDur > 0 ? Math.round(run.totalElapsed / run.totalDur * 100) : 0;
+    document.getElementById('overallProg').textContent =
+        `Segment ${run.idx+1} of ${segs.length}  ·  ${oPct}% complete`;
+}
 
-        // Add time to current timer
-        function addTime(seconds) {
-            totalOriginalTime += seconds;
-            currentTime += seconds;
-            startTime = Date.now() - (totalOriginalTime - currentTime) * 1000;
-            
-            // Update current timer's duration for future reference
-            if (currentTimerIndex < timers.length) {
-                timers[currentTimerIndex].duration = Math.max(5, timers[currentTimerIndex].duration + seconds);
-            }
-        }
+function renderStrip() {
+    const strip = document.getElementById('strip');
+    strip.innerHTML = segs.map((s,i) => {
+        let cls;
+        if      (i < run.idx)  cls = s.type==='timer' ? 'sc-done'     : 'sc-gap-done';
+        else if (i === run.idx) cls = s.type==='timer' ? 'sc-current'  : 'sc-gap-cur';
+        else                   cls = s.type==='timer' ? 'sc-pending'  : 'sc-gap-pend';
+        return `<span class="strip-chip ${cls}">${esc(s.name||'…')}</span>`;
+    }).join('<span class="strip-arr">→</span>');
+}
 
-        // Stop sequence
-        function stopSequence() {
-            if (confirm('Stop the timer sequence?')) {
-                if (timerInterval) {
-                    clearInterval(timerInterval);
-                }
-                isRunning = false;
-                isPaused = false;
-                
-                // Return to setup
-                document.getElementById('setupContainer').style.display = 'block';
-                document.getElementById('runningContainer').style.display = 'none';
-                
-                // Exit fullscreen if active
-                if (document.fullscreenElement) {
-                    document.exitFullscreen();
-                }
-                document.body.classList.remove('fullscreen');
-            }
-        }
+/* ── ON COMPLETE ── */
+function onComplete() {
+    clearInterval(run.tick); run.tick = null; run.active = false;
+    playComplete();
 
-        // Complete sequence
-        function completeSequence() {
-            playNotification();
-            flashScreen();
-            alert('Timer sequence completed! 🎉');
-            stopSequence();
-        }
+    if (opts.loop) {
+        // Loop: restart automatically after a brief pause
+        show('runPanel');
+        document.getElementById('segLabel').textContent = 'COMPLETE — restarting…';
+        document.getElementById('digits').textContent   = '';
+        setTimeout(() => { restartSeq(); }, 2000);
+    } else {
+        // Show complete panel — STAY in fullscreen
+        show('cmpPanel');
+        const t = fmt(totalDur());
+        document.getElementById('cmpSub').textContent =
+            `All ${segs.length} segments done · Total time: ${t}`;
+    }
+}
 
-        // Play notification sound
-        function playNotification() {
-            const audio = document.getElementById('timerEndSound');
-            audio.currentTime = 0;
-            audio.play().catch(e => console.log('Audio play failed:', e));
-        }
+/* ── CONTROLS ── */
+function togglePause() {
+    run.paused = !run.paused;
+    const btn = document.getElementById('pauseBtn');
+    btn.textContent       = run.paused ? '▶ Resume' : '⏸ Pause';
+    btn.style.background  = run.paused
+        ? 'linear-gradient(135deg,#28a745,#20c997)'
+        : 'linear-gradient(135deg,#667eea,#764ba2)';
+}
 
-        // Flash screen effect
-        function flashScreen() {
-            document.body.classList.add('flash-effect');
-            setTimeout(() => {
-                document.body.classList.remove('flash-effect');
-            }, 1500);
-        }
+function skipSeg() {
+    clearInterval(run.tick);
+    run.totalElapsed += run.rem;
+    run.rem = 0;
+    startSeg(run.idx + 1);
+}
 
-        // Toggle fullscreen
-        function toggleFullscreen() {
-            if (!document.fullscreenElement) {
-                document.documentElement.requestFullscreen().then(() => {
-                    document.body.classList.add('fullscreen');
-                    document.querySelector('.fullscreen-progress').style.display = 'block';
-                }).catch(err => {
-                    // Fallback to custom fullscreen
-                    document.body.classList.add('fullscreen');
-                    document.querySelector('.fullscreen-progress').style.display = 'block';
-                });
-            } else {
-                document.exitFullscreen().then(() => {
-                    document.body.classList.remove('fullscreen');
-                    document.querySelector('.fullscreen-progress').style.display = 'none';
-                }).catch(err => {
-                    document.body.classList.remove('fullscreen');
-                    document.querySelector('.fullscreen-progress').style.display = 'none';
-                });
-            }
-        }
+function adj(secs) {
+    run.rem = Math.max(1, run.rem + secs);
+    if (run.rem > run.dur) run.dur = run.rem;
+    updateRunDisplay();
+}
 
-        // Format time display
-        function formatTime(seconds) {
-            const mins = Math.floor(seconds / 60);
-            const secs = seconds % 60;
-            return `${mins}:${secs.toString().padStart(2, '0')}`;
-        }
+function restartSeq() {
+    clearInterval(run.tick); run.tick = null;
 
-        // Save sequence to file
-        function saveSequence() {
-            if (timers.length === 0) {
-                alert('No timers to save');
-                return;
-            }
-            
-            const data = {
-                name: prompt('Enter a name for this sequence:') || 'Timer Sequence',
-                timers: timers.map(t => ({
-                    type: t.type,
-                    label: t.label,
-                    duration: t.originalDuration
-                })),
-                created: new Date().toISOString()
-            };
-            
-            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `${data.name.replace(/[^a-z0-9]/gi, '_')}.json`;
-            a.click();
-            URL.revokeObjectURL(url);
-        }
+    // Reset pause button
+    const pb = document.getElementById('pauseBtn');
+    pb.textContent      = '⏸ Pause';
+    pb.style.background = 'linear-gradient(135deg,#667eea,#764ba2)';
 
-        // Load sequence from file
-        function loadSequence() {
-            document.getElementById('fileInput').click();
-        }
+    run.active = true; run.paused = false;
+    run.idx = 0; run.totalElapsed = 0;
+    run.totalDur = totalDur();
 
-        // Handle file load
-        function handleFileLoad(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-            
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                try {
-                    const data = JSON.parse(e.target.result);
-                    if (data.timers && Array.isArray(data.timers)) {
-                        timers = data.timers.map(t => ({
-                            type: t.type || 'timer',
-                            label: t.label || 'Timer',
-                            duration: t.duration || 60,
-                            originalDuration: t.duration || 60
-                        }));
-                        updateTimerList();
-                        updateTotalTime();
-                        alert(`Loaded sequence: ${data.name || 'Timer Sequence'}`);
-                    } else {
-                        alert('Invalid file format');
-                    }
-                } catch (error) {
-                    alert('Error loading file: ' + error.message);
-                }
-            };
-            reader.readAsText(file);
-        }
+    show('runPanel');
+    renderStrip();
+    startSeg(0);
+}
 
-        // Initialize
-        document.addEventListener('DOMContentLoaded', function() {
-            // Set default values
-            document.getElementById('minutes').value = '5';
-            document.getElementById('seconds').value = '0';
-            
-            // Handle escape key to exit fullscreen
-            document.addEventListener('keydown', function(e) {
-                if (e.key === 'Escape' && document.body.classList.contains('fullscreen')) {
-                    document.body.classList.remove('fullscreen');
-                }
-            });
-            
-            // Auto-update timer type defaults
-            document.getElementById('timerType').addEventListener('change', function() {
-                const isGap = this.value === 'gap';
-                document.getElementById('minutes').value = isGap ? '0' : '5';
-                document.getElementById('seconds').value = isGap ? '5' : '0';
-                document.getElementById('timerLabel').placeholder = isGap ? 'e.g., Transition, Rest' : 'e.g., Discussion, Work';
-            });
-        });
-    </script>
+function backToSetup() {
+    clearInterval(run.tick); run.tick = null; run.active = false;
+    if (inFS) exitFS();
+    show('setupPanel');
+}
+
+/* ══════════════════════════════════════════════
+   FULLSCREEN
+══════════════════════════════════════════════ */
+function toggleFS() { inFS ? exitFS() : enterFS(); }
+
+function enterFS() {
+    (document.documentElement.requestFullscreen
+     || document.documentElement.webkitRequestFullscreen
+     || document.documentElement.mozRequestFullScreen
+    )?.call(document.documentElement).catch(()=>{});
+    document.body.classList.add('fs');
+    inFS = true;
+    document.getElementById('fsBtn').textContent = '✕ Exit Fullscreen';
+}
+
+function exitFS() {
+    if (document.fullscreenElement) document.exitFullscreen().catch(()=>{});
+    document.body.classList.remove('fs');
+    inFS = false;
+    document.getElementById('fsBtn').textContent = '⛶ Fullscreen';
+}
+
+// Handle native Esc key exiting fullscreen
+document.addEventListener('fullscreenchange', () => {
+    if (!document.fullscreenElement && inFS) {
+        document.body.classList.remove('fs');
+        inFS = false;
+        document.getElementById('fsBtn').textContent = '⛶ Fullscreen';
+    }
+});
+
+/* ══════════════════════════════════════════════
+   OPTIONS
+══════════════════════════════════════════════ */
+function toggleOpt(key) {
+    opts[key] = !opts[key];
+    const id = {sound:'togSound', cdown:'togCdown', loop:'togLoop'}[key];
+    const el = document.getElementById(id);
+    if (el) el.className = 'toggle-btn' + (opts[key]?' on':'');
+    document.getElementById('soundFab').textContent = opts.sound ? '🔔' : '🔕';
+}
+
+/* ══════════════════════════════════════════════
+   KEYBOARD SHORTCUTS
+══════════════════════════════════════════════ */
+document.addEventListener('keydown', e => {
+    if (!run.active) return;
+    if (e.target.tagName==='INPUT') return;
+    switch(e.code) {
+        case 'Space':       e.preventDefault(); togglePause(); break;
+        case 'ArrowLeft':   e.preventDefault(); adj(-30); break;
+        case 'ArrowRight':  e.preventDefault(); adj(30);  break;
+        case 'KeyF':        e.preventDefault(); toggleFS(); break;
+        case 'Escape':      if (inFS) { exitFS(); e.preventDefault(); } break;
+    }
+});
+
+/* ══════════════════════════════════════════════
+   HELPERS
+══════════════════════════════════════════════ */
+function fmt(secs) {
+    secs = Math.max(0, Math.round(secs));
+    const h = Math.floor(secs/3600);
+    const m = Math.floor((secs%3600)/60);
+    const s = secs % 60;
+    if (h > 0) return `${h}:${pad(m)}:${pad(s)}`;
+    return `${pad(m)}:${pad(s)}`;
+}
+function pad(n) { return String(n).padStart(2,'0'); }
+
+function show(id) {
+    ['setupPanel','runPanel','cmpPanel'].forEach(p => {
+        document.getElementById(p).style.display = p===id ? 'block' : 'none';
+    });
+}
+
+/* ══════════════════════════════════════════════
+   INIT
+══════════════════════════════════════════════ */
+loadTpl('class');
+</script>
 </body>
 </html>
